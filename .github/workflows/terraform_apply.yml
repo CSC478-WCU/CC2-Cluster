@@ -24,6 +24,12 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
 
+      - name: Create SSH key from secret
+        run: |
+          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
+          chmod 600 cloudlab_decrypted.pem
+        env:
+          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
