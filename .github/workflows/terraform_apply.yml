@@ -61,11 +61,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          nodes_json="$(terraform output -json -no-color | jq -c '.nodes.value')
-
-          {
-            echo "nodes_json=$nodes_json"
-          } >> "$GITHUB_OUTPUT"
+          nodes_json="$(terraform output -json -no-color | jq -c '.nodes.value')"
+          echo "nodes_json=$nodes_json" >> "$GITHUB_OUTPUT"
+          echo "nodes_json=$nodes_json"
 
   ansible:
     needs: terraform
