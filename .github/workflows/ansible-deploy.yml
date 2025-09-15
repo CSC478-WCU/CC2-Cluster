@@ -1,0 +1,49 @@
+name: Ansible Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      nodes_json: { required: true, type: string } # {"host1":"155.98.36.94","vm1":"155.98.38.240"}
+      ssh_user: { required: true, type: string }
+      branch: { required: true, type: string }
+    secrets:
+      CLOUDLAB_PEM_B64: { required: true }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Recreate SSH key from secret
+        run: |
+          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
+          chmod 600 cloudlab_decrypted.pem
+        env:
+          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
+
+      - name: ansible.cfg
+        run: |
+          cat > ansible.cfg <<EOF
+          [defaults]
+          private_key_file = ${GITHUB_WORKSPACE}/cloudlab_decrypted.pem
+          host_key_checking = False
+          forks = 20
+          timeout = 30
+          [ssh_connection]
+          pipelining = True
+          EOF
+
+      - name: Run bootstrap + site
+        run: |
+          ansible-playbook -i localhost, ansible/playbooks/bootstrap.yml \
+            -e nodes_json='${{ inputs.nodes_json }}' \
+            -e ssh_user='${{ inputs.ssh_user }}'

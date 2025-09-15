@@ -1,0 +1,60 @@
+name: Terraform Apply Cloudlab
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "main"
+      ssh_user:
+        description: "SSH user on nodes (CL username)"
+        required: true
+        default: "tg996676"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    outputs:
+      nodes_json: ${{ steps.collect.outputs.nodes_json }}
+      url: ${{ steps.collect.outputs.url }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.2
+
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./infra
+        run: terraform apply -auto-approve
+
+      - name: Show outputs (human)
+        working-directory: ./infra
+        run: terraform output
+
+      - name: Collect outputs for Ansible
+        id: collect
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          TF_JSON="$(terraform -chdir=./infra output -json)"
+          echo "nodes_json=$(echo "$TF_JSON" | jq -c '.nodes.value')" >> "$GITHUB_OUTPUT"
+          echo "url=$(echo "$TF_JSON" | jq -r '.url.value')"         >> "$GITHUB_OUTPUT"
+
+  ansible:
+    needs: terraform
+    uses: ./.github/workflows/ansible-deploy.yml
+    with:
+      nodes_json: ${{ needs.terraform.outputs.nodes_json }}
+      ssh_user: ${{ inputs.ssh_user }}
+      branch: ${{ inputs.branch }}
+    secrets:
+      CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}

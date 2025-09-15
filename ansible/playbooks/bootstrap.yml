@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    nodes: "{{ nodes_json | from_json }}"   # e.g. {"vm1":"155.98.38.240","vm2":"155.98.36.94"}
+    ssh_user: "{{ ssh_user | default('deploy') }}"
+  tasks:
+    - name: Set/override host vars for each node
+      add_host:
+        name: "{{ item.key }}"                 # vm1/vm2/vm3 (must match inventory names)
+        ansible_host: "{{ item.value }}"       # IP address - terraform output
+        ansible_user: "{{ ssh_user }}"         # SSH user
+      loop: "{{ nodes | dict2items }}"
+
+# hand off to site playbook
+- import_playbook: site.yml
