@@ -52,11 +52,22 @@ jobs:
 
       - name: Collect outputs for Ansible
         id: collect
+        working-directory: ./infra
+        shell: bash
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          TF_JSON="$(terraform -chdir=./infra output -json)"
-          echo "nodes_json=$(echo "$TF_JSON" | jq -c '.nodes.value')" >> "$GITHUB_OUTPUT"
-          echo "url=$(echo "$TF_JSON" | jq -r '.url.value')"         >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          terraform output -json > tf_out.json
+
+          echo "Nodes:"
+          jq -r '.nodes.value | to_entries[] | "  \(.key) -> \(.value)"' tf_out.json
+          echo "URL:"
+          jq -r '.url.value' tf_out.json
+
+          NODES_JSON=$(jq -c '.nodes.value' tf_out.json)
+          URL=$(jq -r '.url.value' tf_out.json)
+
+          echo "nodes_json=$NODES_JSON" >> "$GITHUB_OUTPUT"
+          echo "url=$URL"               >> "$GITHUB_OUTPUT"
 
   ansible:
     needs: terraform
