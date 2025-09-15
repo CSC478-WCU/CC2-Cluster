@@ -59,26 +59,19 @@ jobs:
         working-directory: ./infra
         shell: bash
         run: |
-          terraform output -json | perl -0777 -ne '
-            my $s = index($_, "{");
-            my $e = rindex($_, "}");
-            if ($s >= 0 && $e >= $s) {
-              print substr($_, $s, $e - $s + 1);
-            }
-          ' > tf_out.json
+          set -euo pipefail
 
-          echo "----- tf_out.json -----"
-          cat tf_out.json
-          echo "-----------------------"
+          nodes_json="$(terraform -no-color output -json nodes | jq -c '.value')"
+          url="$(terraform -no-color output -raw url)"
 
-          jq -e '.' tf_out.json >/dev/null
-          echo "Nodes:"
-          jq -r '.nodes.value | to_entries[] | "  \(.key) -> \(.value)"' tf_out.json
-          echo "URL:"
-          jq -r '.url.value' tf_out.json
+          echo "Nodes:";  echo "$nodes_json" | jq -r 'to_entries[] | "  \(.key) -> \(.value)"'
+          echo "URL:";    echo "$url"
 
-          echo "nodes_json=$(jq -c '.nodes.value' tf_out.json)" >> "$GITHUB_OUTPUT"
-          echo "url=$(jq -r '.url.value' tf_out.json)"          >> "$GITHUB_OUTPUT"
+          {
+            echo "nodes_json=$nodes_json"
+            echo "url=$url"
+          } >> "$GITHUB_OUTPUT"
+
   ansible:
     needs: terraform
     uses: ./.github/workflows/ansible-deploy.yml
