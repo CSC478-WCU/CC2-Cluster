@@ -61,15 +61,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          nodes_json="$(terraform -no-color output -json nodes | jq -c '.value')"
-          url="$(terraform -no-color output -raw url)"
-
-          echo "Nodes:";  echo "$nodes_json" | jq -r 'to_entries[] | "  \(.key) -> \(.value)"'
-          echo "URL:";    echo "$url"
+          nodes_json="$(terraform output -json -no-color | jq -c '.nodes.value')
 
           {
             echo "nodes_json=$nodes_json"
-            echo "url=$url"
           } >> "$GITHUB_OUTPUT"
 
   ansible:
