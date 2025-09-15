@@ -48,7 +48,7 @@ jobs:
 
       - name: Show outputs (human)
         working-directory: ./infra
-        run: terraform output -json
+        run: terraform output
 
       - name: Install jq
         run: |
@@ -59,7 +59,19 @@ jobs:
         working-directory: ./infra
         shell: bash
         run: |
-          terraform output -json > tf_out.json
+          terraform output -json | perl -0777 -ne '
+            my $s = index($_, "{");
+            my $e = rindex($_, "}");
+            if ($s >= 0 && $e >= $s) {
+              print substr($_, $s, $e - $s + 1);
+            }
+          ' > tf_out.json
+
+          echo "----- tf_out.json -----"
+          cat tf_out.json
+          echo "-----------------------"
+
+          jq -e '.' tf_out.json >/dev/null
           echo "Nodes:"
           jq -r '.nodes.value | to_entries[] | "  \(.key) -> \(.value)"' tf_out.json
           echo "URL:"
@@ -67,7 +79,6 @@ jobs:
 
           echo "nodes_json=$(jq -c '.nodes.value' tf_out.json)" >> "$GITHUB_OUTPUT"
           echo "url=$(jq -r '.url.value' tf_out.json)"          >> "$GITHUB_OUTPUT"
-
   ansible:
     needs: terraform
     uses: ./.github/workflows/ansible-deploy.yml
