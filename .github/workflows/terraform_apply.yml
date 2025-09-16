@@ -37,6 +37,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.7.2
+          terraform_wrapper: false
 
       - name: Terraform Init
         working-directory: ./infra
@@ -60,9 +61,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          nodes_json="$(terraform output -json | jq -c '.nodes.value')"
-          echo "nodes_json=$nodes_json" >> "$GITHUB_OUTPUT"
+          tf_json="$(terraform output -json)"           # pure JSON, no color
+          echo "$tf_json" | jq -e '.' >/dev/null        # sanity check
+          nodes_json="$(echo "$tf_json" | jq -c '.nodes.value')"
+          {
+            echo "nodes_json<<EOF"
+            echo "$nodes_json"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
           echo "nodes_json=$nodes_json"
 
   ansible:
