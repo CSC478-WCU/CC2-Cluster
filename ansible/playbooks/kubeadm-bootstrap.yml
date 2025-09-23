@@ -6,7 +6,7 @@
   become: yes
   tasks:
     - name: Clone repo
-      git:
+      ansible.builtin.git:
         repo: "https://github.com/csc478-wcu/cc2-cluster.git"
         dest: "/home/{{ ansible_user }}/local/repository"
         version: main
@@ -18,19 +18,26 @@
   hosts: all
   become: yes
   tasks:
-    - name: Add Kubernetes apt key
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
+    - name: Create keyrings directory for Kubernetes
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+        mode: '0644'
 
     - name: Add Kubernetes apt repository
-      apt_repository:
-        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
         state: present
         filename: kubernetes
 
     - name: Install kubeadm, kubelet, kubectl
-      apt:
+      ansible.builtin.apt:
         name:
           - kubelet
           - kubeadm
@@ -39,7 +46,7 @@
         update_cache: yes
 
     - name: Hold kube packages at current version
-      command: apt-mark hold kubelet kubeadm kubectl
+      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
 
 # ----------------------------
 # Initialize control-plane node
@@ -49,13 +56,13 @@
   become: yes
   tasks:
     - name: Run kubeadm init
-      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      ansible.builtin.command: kubeadm init --pod-network-cidr=10.244.0.0/16
       args:
         creates: /etc/kubernetes/admin.conf
       register: kubeadm_init
 
     - name: Create .kube directory
-      file:
+      ansible.builtin.file:
         path: /home/{{ ansible_user }}/.kube
         state: directory
         owner: "{{ ansible_user }}"
@@ -63,7 +70,7 @@
         mode: 0755
 
     - name: Copy admin.conf to user kube config
-      copy:
+      ansible.builtin.copy:
         src: /etc/kubernetes/admin.conf
         dest: /home/{{ ansible_user }}/.kube/config
         remote_src: yes
@@ -72,15 +79,15 @@
         mode: 0644
 
     - name: Extract join command
-      shell: kubeadm token create --print-join-command
+      ansible.builtin.shell: kubeadm token create --print-join-command
       register: join_command
 
     - name: Save join command for workers
-      set_fact:
+      ansible.builtin.set_fact:
         worker_join_cmd: "{{ join_command.stdout }}"
       delegate_to: localhost
 
-    - debug:
+    - ansible.builtin.debug:
         msg: "Worker join command is {{ join_command.stdout }}"
 
     # ----------------------------
@@ -99,6 +106,6 @@
   become: yes
   tasks:
     - name: Run kubeadm join
-      command: "{{ hostvars['localhost'].worker_join_cmd }}"
+      ansible.builtin.command: "{{ hostvars['localhost'].worker_join_cmd }}"
       args:
         creates: /etc/kubernetes/kubelet.conf
