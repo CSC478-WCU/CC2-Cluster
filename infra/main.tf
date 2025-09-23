@@ -3,29 +3,29 @@ resource "cloudlab_portal_experiment" "CC2-Cluster" {
   wait_for_status = "ready"
 
   rawpc {
-    name          = "vm1"
+    name          = "kubeadm"
     hardware_type = "d430"
     exclusive     = true
     routable_ip   = true
   }
 
   rawpc {
-    name          = "vm2"
+    name          = "worker1"
     hardware_type = "d430"
     exclusive     = true
     routable_ip   = true
   }
 
   rawpc {
-    name          = "vm3"
+    name          = "worker2"
     hardware_type = "d430"
     exclusive     = true
     routable_ip   = true
   }
   lan {
     name = "lan0"
-    interface { node = "vm1" }
-    interface { node = "vm2" }
-    interface { node = "vm3" }
+    interface { node = "kubeadm" }
+    interface { node = "worker1" }
+    interface { node = "worker2" }
   }
 }
