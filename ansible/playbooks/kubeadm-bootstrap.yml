@@ -1,3 +1,13 @@
+- name: Clone cluster Helm repo
+  hosts: kubeadmin
+  become: yes
+  tasks:
+    - name: Clone repo
+      git:
+        repo: "https://github.com/csc478-wcu/cc2-cluster.git"
+        dest: "/home/{{ ansible_user }}/local/repository"
+        version: main
+        
 ---
 - name: Install Kubernetes components on all nodes
   hosts: all
