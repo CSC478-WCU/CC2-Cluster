@@ -3,11 +3,12 @@ name: Ansible Deploy (Reusable)
 on:
   workflow_call:
     inputs:
-      nodes_json: { required: true, type: string } # {"host1":"155.98.36.94","vm1":"155.98.38.240"}
+      nodes_json: { required: true, type: string }
       ssh_user: { required: true, type: string }
       branch: { required: true, type: string }
     secrets:
       CLOUDLAB_PEM_B64: { required: true }
+      ANSIBLE_VAULT_PASSWORD: { required: true }
 
 jobs:
   deploy:
@@ -42,8 +43,20 @@ jobs:
           pipelining = True
           EOF
 
-      - name: Run bootstrap + site
+      - name: Decrypt Cloudflare vault
+        run: |
+          ansible-vault decrypt ansible/vault/cloudflare.yml --output ansible/vault/cloudflare.yml
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+
+      - name: Run cluster bootstrap
         run: |
           ansible-playbook -i localhost, ansible/playbooks/bootstrap.yml \
+            -e nodes_json='${{ inputs.nodes_json }}' \
+            -e ssh_user='${{ inputs.ssh_user }}'
+
+      - name: Run ingress bootstrap
+        run: |
+          ansible-playbook -i localhost, ansible/playbooks/ingress-bootstrap.yml \
             -e nodes_json='${{ inputs.nodes_json }}' \
             -e ssh_user='${{ inputs.ssh_user }}'
