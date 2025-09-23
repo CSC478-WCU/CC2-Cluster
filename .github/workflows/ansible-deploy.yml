@@ -24,6 +24,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible
 
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install kubernetes.core
+
       - name: Recreate SSH key from secret
         run: |
           echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
