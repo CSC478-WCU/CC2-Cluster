@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
+  connection: local
   gather_facts: false
   vars:
     nodes: "{{ nodes_json | from_json }}"   # {"kubeadm":"155.98.38.240","worker1":"155.98.36.94","worker2":"155.98.36.95"}
@@ -10,7 +11,9 @@
         name: "{{ item.key }}"                 # kubeadm / worker1 / worker2
         ansible_host: "{{ item.value }}"       # IP address
         ansible_user: "{{ ssh_user }}"         # SSH user
-        groups: "{{ 'workers' if item.key != 'kubeadm' else 'kubeadmin' }}"
+        groups: >-
+          {{ 'workers' if item.key != 'kubeadm' else 'kubeadmin' }},
+          cloudlab_nodes
       loop: "{{ nodes | dict2items }}"
 
 # hand off to the cluster setup plays

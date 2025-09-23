@@ -1,4 +1,3 @@
----
 # ----------------------------
 # Clone cluster Helm repo
 # ----------------------------
@@ -19,6 +18,17 @@
   hosts: all
   become: yes
   tasks:
+    - name: Add Kubernetes apt key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes apt repository
+      apt_repository:
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+        filename: kubernetes
+
     - name: Install kubeadm, kubelet, kubectl
       apt:
         name:
