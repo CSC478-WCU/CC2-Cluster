@@ -4,21 +4,21 @@ resource "cloudlab_portal_experiment" "CC2-Cluster" {
 
   rawpc {
     name          = "kubeadm"
-    hardware_type = "d430"
+    hardware_type = "d710"
     exclusive     = true
     routable_ip   = true
   }
 
   rawpc {
     name          = "worker1"
-    hardware_type = "d430"
+    hardware_type = "d710"
     exclusive     = true
     routable_ip   = true
   }
 
   rawpc {
     name          = "worker2"
-    hardware_type = "d430"
+    hardware_type = "d710"
     exclusive     = true
     routable_ip   = true
   }
