@@ -15,4 +15,5 @@
 
 # hand off to the cluster setup plays
 - import_playbook: install_deps.yml
-- import_playbook: kubeadm_bootstrap.yml
+- import_playbook: kubeadm-bootstrap.yml
+- import_playbook: ingress-bootstrap.yml
