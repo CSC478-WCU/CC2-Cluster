@@ -2,17 +2,17 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    nodes: "{{ nodes_json | from_json }}"   # e.g. {"vm1":"155.98.38.240","vm2":"155.98.36.94"}
+    nodes: "{{ nodes_json | from_json }}"   # {"kubeadm":"155.98.38.240","worker1":"155.98.36.94","worker2":"155.98.36.95"}
     ssh_user: "{{ ssh_user | default('deploy') }}"
   tasks:
-    - name: Set/override host vars for each node
+    - name: Register each node in inventory
       add_host:
-        name: "{{ item.key }}"                 # vm1/vm2/vm3 (must match inventory names)
-        ansible_host: "{{ item.value }}"       # IP address - terraform output
+        name: "{{ item.key }}"                 # kubeadm / worker1 / worker2
+        ansible_host: "{{ item.value }}"       # IP address
         ansible_user: "{{ ssh_user }}"         # SSH user
-        groups: cloudlab_nodes
+        groups: "{{ 'workers' if item.key != 'kubeadm' else 'kubeadmin' }}"
       loop: "{{ nodes | dict2items }}"
 
-# hand off to site playbook
+# hand off to the cluster setup plays
 - import_playbook: install_deps.yml
-- import_playbook: site.yml
+- import_playbook: kubeadm_cluster.yml
