@@ -43,20 +43,23 @@ jobs:
           pipelining = True
           EOF
 
-      - name: Decrypt Cloudflare vault
+      - name: Write vault password file
         run: |
-          ansible-vault decrypt ansible/vault/cloudflare.yml --output ansible/vault/cloudflare.yml
+          echo "$ANSIBLE_VAULT_PASSWORD" > .vault_pass.txt
+          chmod 600 .vault_pass.txt
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
 
       - name: Run cluster bootstrap
         run: |
           ansible-playbook -i localhost, ansible/playbooks/bootstrap.yml \
+            --vault-password-file .vault_pass.txt \
             -e nodes_json='${{ inputs.nodes_json }}' \
             -e ssh_user='${{ inputs.ssh_user }}'
 
       - name: Run ingress bootstrap
         run: |
           ansible-playbook -i localhost, ansible/playbooks/ingress-bootstrap.yml \
+            --vault-password-file .vault_pass.txt \
             -e nodes_json='${{ inputs.nodes_json }}' \
             -e ssh_user='${{ inputs.ssh_user }}'
