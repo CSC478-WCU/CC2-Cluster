@@ -1,1 +1,67 @@
+---
+- name: Bootstrap ingress + external-dns
+  hosts: kubeadmin
+  become: yes
+  vars_files:
+    - ../vault/cloudflare.yml   # contains cloudflare_api_token
+
+  tasks:
+    # -------------------
+    # Ingress Controller
+    # -------------------
+    - name: Add ingress-nginx repo
+      community.kubernetes.helm_repository:
+        name: ingress-nginx
+        repo_url: https://kubernetes.github.io/ingress-nginx
+
+    - name: Install ingress-nginx
+      community.kubernetes.helm:
+        name: ingress-nginx
+        chart_ref: ingress-nginx/ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+        wait: true
+        values:
+          controller:
+            service:
+              type: LoadBalancer   # MetalLB assigns IP
+            admissionWebhooks:
+              enabled: false
+
+    # -------------------
+    # ExternalDNS (Cloudflare)
+    # -------------------
+    - name: Add bitnami repo
+      community.kubernetes.helm_repository:
+        name: bitnami
+        repo_url: https://charts.bitnami.com/bitnami
+
+    - name: Install external-dns
+      community.kubernetes.helm:
+        name: external-dns
+        chart_ref: bitnami/external-dns
+        release_namespace: external-dns
+        create_namespace: true
+        wait: true
+        values:
+          provider: cloudflare
+          cloudflare:
+            apiToken: "{{ cloudflare_api_token }}"
+          domainFilters:
+            - campusconnectwcu.com
+          policy: sync
+          txtOwnerId: campusconnect
+          interval: 1m
+          logLevel: info
+
+    # -------------------
+    # Your ingress chart from repo
+    # -------------------
+    - name: Deploy ingress Helm chart
+      community.kubernetes.helm:
+        name: campusconnect-ingress
+        chart_ref: /home/{{ ansible_user }}/local/repository/helm/ingress
+        release_namespace: default
+        create_namespace: false
+        wait: true
 
