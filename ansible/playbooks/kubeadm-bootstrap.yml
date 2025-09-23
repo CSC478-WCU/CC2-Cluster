@@ -1,3 +1,7 @@
+---
+# ----------------------------
+# Clone cluster Helm repo
+# ----------------------------
 - name: Clone cluster Helm repo
   hosts: kubeadmin
   become: yes
@@ -7,8 +11,10 @@
         repo: "https://github.com/csc478-wcu/cc2-cluster.git"
         dest: "/home/{{ ansible_user }}/local/repository"
         version: main
-        
----
+
+# ----------------------------
+# Install Kubernetes components
+# ----------------------------
 - name: Install Kubernetes components on all nodes
   hosts: all
   become: yes
@@ -23,19 +29,7 @@
         update_cache: yes
 
     - name: Hold kube packages at current version
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
-        update_cache: yes
-        allow_downgrade: yes
-      register: kube_packages
-
-    - name: Mark kube packages as held
-      command: "apt-mark hold kubelet kubeadm kubectl"
-      when: kube_packages is changed
+      command: apt-mark hold kubelet kubeadm kubectl
 
 # ----------------------------
 # Initialize control-plane node
@@ -74,9 +68,18 @@
     - name: Save join command for workers
       set_fact:
         worker_join_cmd: "{{ join_command.stdout }}"
+      delegate_to: localhost
 
     - debug:
-        var: worker_join_cmd
+        msg: "Worker join command is {{ join_command.stdout }}"
+
+    # ----------------------------
+    # Install Flannel CNI
+    # ----------------------------
+    - name: Install Flannel CNI
+      kubernetes.core.k8s:
+        state: present
+        src: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 
 # ----------------------------
 # Join worker nodes
@@ -86,6 +89,6 @@
   become: yes
   tasks:
     - name: Run kubeadm join
-      command: "{{ hostvars['kubeadmin'].worker_join_cmd }}"
+      command: "{{ hostvars['localhost'].worker_join_cmd }}"
       args:
         creates: /etc/kubernetes/kubelet.conf
