@@ -80,3 +80,4 @@ jobs:
       branch: ${{ inputs.branch }}
     secrets:
       CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
+      ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
