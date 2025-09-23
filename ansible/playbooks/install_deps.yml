@@ -1,0 +1,106 @@
+---
+- name: Install dependencies on all CloudLab nodes
+  hosts: cloudlab_nodes
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+          - git
+        state: present
+
+    # -------------------
+    # Install Docker
+    # -------------------
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repo
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Install Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Enable and start Docker
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    # -------------------
+    # Install kubectl
+    # -------------------
+    - name: Download Google Cloud apt key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes apt repo
+      apt_repository:
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+        filename: kubernetes
+
+    - name: Install kubectl
+      apt:
+        name: kubectl
+        state: present
+        update_cache: yes
+
+    # -------------------
+    # Install Helm
+    # -------------------
+    - name: Download Helm install script
+      get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get-helm-3
+        mode: '0755'
+
+    - name: Run Helm install script
+      command: /tmp/get-helm-3
+      args:
+        creates: /usr/local/bin/helm
+
+    # -------------------
+    # Verify installs
+    # -------------------
+    - name: Check versions
+      command: "{{ item }}"
+      loop:
+        - docker --version
+        - kubectl version --client --short
+        - helm version --short
+        - git --version
+      register: version_output
+      ignore_errors: yes
+
+    - debug:
+        var: version_output.results
