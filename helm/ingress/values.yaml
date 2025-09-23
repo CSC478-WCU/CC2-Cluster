@@ -1,0 +1,22 @@
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: campusconnectwcu.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: placeholder
+          servicePort: 80
+    - host: api.campusconnectwcu.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: placeholder
+          servicePort: 80
+    - host: admin.campusconnectwcu.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: placeholder
+          servicePort: 80
