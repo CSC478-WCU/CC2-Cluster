@@ -61,22 +61,21 @@
       ansible.builtin.command: sysctl --system
       changed_when: false
 
-    # (Optional) turn off swap to avoid kubeadm/kubelet complaints
+    # Disable swap (required for kubeadm init)
     - name: Disable swap immediately (ignore if none)
       ansible.builtin.command: swapoff -a
       changed_when: false
       failed_when: false
 
-    - name: Ensure swap is commented in fstab (idempotent)
+    - name: Ensure swap is commented in fstab
       ansible.builtin.replace:
         path: /etc/fstab
         regexp: '^(?!#)(.+\s+swap\s+.+)$'
         replace: '# \1'
-      register: swap_fstab_result
       failed_when: false
 
     # -------------------
-    # containerd setup (Docker repo, CRI enabled, systemd cgroup)
+    # containerd setup
     # -------------------
     - name: Ensure keyrings directory exists
       ansible.builtin.file:
@@ -84,7 +83,7 @@
         state: directory
         mode: '0755'
 
-    - name: Download Docker GPG key for containerd
+    - name: Download Docker GPG key
       ansible.builtin.shell: |
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
       args:
@@ -135,10 +134,35 @@
         state: present
         timeout: 30
 
-    - name: Install cri-tools (crictl)
-      ansible.builtin.apt:
-        name: cri-tools
+    # -------------------
+    # Kubernetes repo + tools (includes cri-tools)
+    # -------------------
+    - name: Download Kubernetes GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+      args:
+        creates: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+    - name: Add Kubernetes apt repo
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
         state: present
+        filename: kubernetes
+
+    - name: Install kubeadm, kubelet, kubectl, cri-tools
+      ansible.builtin.apt:
+        name:
+          - kubeadm
+          - kubelet
+          - kubectl
+          - cri-tools
+        state: present
+        update_cache: yes
+
+    - name: Hold kube packages
+      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl cri-tools
+      register: apt_mark_hold_result
+      changed_when: "'hold' in (apt_mark_hold_result.stdout | default(''))"
 
     - name: Configure crictl to use containerd
       ansible.builtin.copy:
@@ -156,35 +180,6 @@
       ansible.builtin.command: crictl info
       register: crictl_info
       changed_when: false
-
-    # -------------------
-    # Kubernetes (kubectl + kubeadm + kubelet) from pkgs.k8s.io
-    # -------------------
-    - name: Download Kubernetes GPG key
-      ansible.builtin.shell: |
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-      args:
-        creates: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-
-    - name: Add Kubernetes apt repo (1.30 stable)
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
-        state: present
-        filename: kubernetes
-
-    - name: Install kubeadm, kubelet, kubectl
-      ansible.builtin.apt:
-        name:
-          - kubeadm
-          - kubelet
-          - kubectl
-        state: present
-        update_cache: yes
-
-    - name: Hold kube packages at current version
-      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
-      changed_when: "'hold' in (apt_mark_hold_result.stdout | default(''))"
-      register: apt_mark_hold_result
 
     # -------------------
     # Helm install
