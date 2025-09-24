@@ -12,43 +12,6 @@
         version: main
 
 # ----------------------------
-# Install Kubernetes components
-# ----------------------------
-- name: Install Kubernetes components on all nodes
-  hosts: all
-  become: yes
-  tasks:
-    - name: Ensure keyrings directory exists for Kubernetes
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Download Kubernetes GPG key
-      ansible.builtin.shell: |
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-      args:
-        creates: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-
-    - name: Add Kubernetes apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
-        state: present
-        filename: kubernetes
-
-    - name: Install kubeadm, kubelet, kubectl
-      ansible.builtin.apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
-        update_cache: yes
-
-    - name: Hold kube packages at current version
-      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
-
-# ----------------------------
 # Initialize control-plane node
 # ----------------------------
 - name: Initialize control plane (kubeadmin)
@@ -56,7 +19,10 @@
   become: yes
   tasks:
     - name: Run kubeadm init
-      ansible.builtin.command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      ansible.builtin.command: >
+        kubeadm init
+        --pod-network-cidr=10.244.0.0/16
+        --cri-socket=unix:///var/run/containerd/containerd.sock
       args:
         creates: /etc/kubernetes/admin.conf
       register: kubeadm_init

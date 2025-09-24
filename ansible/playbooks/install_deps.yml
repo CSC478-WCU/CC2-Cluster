@@ -1,4 +1,6 @@
----
+# -------------------
+# Install dependencies on all CloudLab nodes
+# -------------------
 - name: Install dependencies on all CloudLab nodes
   hosts: cloudlab_nodes
   become: yes
@@ -11,6 +13,7 @@
     - name: Install base packages
       ansible.builtin.apt:
         name:
+          - apt-transport-https
           - ca-certificates
           - curl
           - gnupg
@@ -20,7 +23,7 @@
         state: present
 
     # -------------------
-    # Install Docker
+    # containerd setup
     # -------------------
     - name: Ensure keyrings directory exists
       ansible.builtin.file:
@@ -28,50 +31,41 @@
         state: directory
         mode: '0755'
 
-    - name: Download Docker GPG key and dearmor
+    - name: Download Docker GPG key for containerd
       ansible.builtin.shell: |
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
       args:
         creates: /etc/apt/keyrings/docker.gpg
 
-    - name: Add Docker APT repo
+    - name: Add containerd apt repo
       ansible.builtin.apt_repository:
         repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
-        filename: docker
+        filename: containerd
 
-    - name: Install Docker packages
+    - name: Install containerd
       ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
+        name: containerd.io
         state: present
         update_cache: yes
 
-    - name: Enable and start Docker
-      ansible.builtin.service:
-        name: docker
+    - name: Configure containerd with systemd cgroup driver
+      ansible.builtin.shell: |
+        mkdir -p /etc/containerd
+        containerd config default | tee /etc/containerd/config.toml
+        sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+      args:
+        creates: /etc/containerd/config.toml
+
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
         enabled: yes
-        state: started
-
-    - name: Add current user to docker group
-      ansible.builtin.user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
+        state: restarted
 
     # -------------------
-    # Install kubectl (latest stable)
+    # Kubernetes (kubectl + kubeadm + kubelet)
     # -------------------
-    - name: Ensure keyrings directory exists for Kubernetes
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
     - name: Download Kubernetes GPG key
       ansible.builtin.shell: |
         curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
@@ -84,14 +78,20 @@
         state: present
         filename: kubernetes
 
-    - name: Install kubectl
+    - name: Install kubeadm, kubelet, kubectl
       ansible.builtin.apt:
-        name: kubectl
+        name:
+          - kubeadm
+          - kubelet
+          - kubectl
         state: present
         update_cache: yes
 
+    - name: Hold kube packages at current version
+      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
+
     # -------------------
-    # Install Helm
+    # Helm install
     # -------------------
     - name: Download Helm install script
       ansible.builtin.get_url:
@@ -110,9 +110,11 @@
     - name: Check versions
       ansible.builtin.command: "{{ item }}"
       loop:
-        - docker --version
-        - kubectl version --client --short
-        - helm version --short
+        - containerd --version
+        - kubeadm version
+        - kubelet --version
+        - kubectl version --client
+        - helm version
         - git --version
       register: version_output
       ignore_errors: yes
