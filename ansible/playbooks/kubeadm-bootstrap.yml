@@ -10,7 +10,6 @@
         path: "/home/{{ ansible_user }}/local"
         state: directory
         owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
         mode: '0755'
 
     - name: Clone repo
@@ -46,7 +45,6 @@
         path: /home/{{ ansible_user }}/.kube
         state: directory
         owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
         mode: '0755'
 
     - name: Copy admin.conf to user kube config
@@ -55,7 +53,6 @@
         dest: /home/{{ ansible_user }}/.kube/config
         remote_src: yes
         owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
         mode: '0644'
 
     - name: Extract join command
