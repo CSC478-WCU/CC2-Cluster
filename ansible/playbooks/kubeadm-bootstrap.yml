@@ -18,17 +18,17 @@
   hosts: all
   become: yes
   tasks:
-    - name: Create keyrings directory for Kubernetes
+    - name: Ensure keyrings directory exists for Kubernetes
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
 
     - name: Download Kubernetes GPG key
-      ansible.builtin.get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-        mode: '0644'
+      ansible.builtin.shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+      args:
+        creates: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 
     - name: Add Kubernetes apt repository
       ansible.builtin.apt_repository:
