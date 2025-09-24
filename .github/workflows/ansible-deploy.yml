@@ -42,8 +42,12 @@ jobs:
           host_key_checking = False
           forks = 20
           timeout = 30
+          interpreter_python = auto_silent
+
           [ssh_connection]
           pipelining = True
+          ssh_args = -o ControlMaster=auto -o ControlPersist=60s \
+                    -o ServerAliveInterval=30 -o ServerAliveCountMax=5
           EOF
 
       - name: Write vault password file

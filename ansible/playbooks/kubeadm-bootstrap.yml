@@ -1,3 +1,4 @@
+---
 # ----------------------------
 # Clone cluster Helm repo
 # ----------------------------
@@ -7,7 +8,7 @@
   tasks:
     - name: Ensure repo parent exists
       ansible.builtin.file:
-        path: "/home/{{ ansible_user }}/local"
+        path: "{{ ansible_env.HOME }}/local"
         state: directory
         owner: "{{ ansible_user }}"
         mode: '0755'
@@ -15,7 +16,7 @@
     - name: Clone repo
       ansible.builtin.git:
         repo: "https://github.com/csc478-wcu/cc2-cluster.git"
-        dest: "/home/{{ ansible_user }}/local/repository"
+        dest: "{{ ansible_env.HOME }}/local/repository"
         version: main
         force: yes
 
@@ -42,7 +43,7 @@
 
     - name: Create .kube directory for SSH user
       ansible.builtin.file:
-        path: /home/{{ ansible_user }}/.kube
+        path: "{{ ansible_env.HOME }}/.kube"
         state: directory
         owner: "{{ ansible_user }}"
         mode: '0755'
@@ -50,7 +51,7 @@
     - name: Copy admin.conf to user kube config
       ansible.builtin.copy:
         src: /etc/kubernetes/admin.conf
-        dest: /home/{{ ansible_user }}/.kube/config
+        dest: "{{ ansible_env.HOME }}/.kube/config"
         remote_src: yes
         owner: "{{ ansible_user }}"
         mode: '0644'
