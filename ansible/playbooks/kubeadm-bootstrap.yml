@@ -68,13 +68,13 @@
         msg: "Worker join command is {{ join_command.stdout }}"
 
     # ----------------------------
-    # Install Flannel CNI (use admin.conf directly)
+    # Install Flannel CNI (best practice: kubectl apply)
     # ----------------------------
     - name: Install Flannel CNI
-      kubernetes.core.k8s:
-        state: present
-        src: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-        kubeconfig: /etc/kubernetes/admin.conf
+      ansible.builtin.command: >
+        kubectl --kubeconfig=/etc/kubernetes/admin.conf
+        apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      changed_when: false
 
     - name: Wait for flannel to roll out
       ansible.builtin.command: >
