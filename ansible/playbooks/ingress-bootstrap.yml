@@ -22,11 +22,11 @@
         create_namespace: true
         kubeconfig: /etc/kubernetes/admin.conf
         wait: true
-        timeout: 600
+        timeout: "600s"
         values:
           controller:
             service:
-              type: LoadBalancer  
+              type: LoadBalancer
             admissionWebhooks:
               enabled: false
 
@@ -46,7 +46,7 @@
         create_namespace: true
         kubeconfig: /etc/kubernetes/admin.conf
         wait: true
-        timeout: 600
+        timeout: "600s"
         values:
           sources:
             - ingress
@@ -72,4 +72,4 @@
         create_namespace: false
         kubeconfig: /etc/kubernetes/admin.conf
         wait: true
-        timeout: 600
+        timeout: "600s"
