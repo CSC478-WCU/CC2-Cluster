@@ -1,11 +1,75 @@
 ---
-- name: Bootstrap ingress + external-dns
+- name: Bootstrap ingress + external-dns + metallb
   hosts: kubeadmin
   become: yes
   vars_files:
     - ../vault/cloudflare.yml   # contains cloudflare_api_token
 
   tasks:
+    # -------------------
+    # Discover subnet for MetalLB
+    # -------------------
+    - name: Get primary interface IPv4 CIDR
+      ansible.builtin.command: ip -4 addr show dev eno1
+      register: ip_addr
+      changed_when: false
+
+    - name: Parse CIDR from ip addr output
+      ansible.builtin.set_fact:
+        node_cidr: "{{ ip_addr.stdout_lines | select('search', 'inet ') | first | regex_search('inet ([0-9.]+/[0-9]+)', '\\1') | first }}"
+
+    - name: Derive subnet base (for pool)
+      ansible.builtin.set_fact:
+        subnet_base: "{{ node_cidr.split('/')[0].rsplit('.', 1)[0] }}"
+        subnet_prefix: "{{ node_cidr.split('/')[1] }}"
+
+    - name: Define MetalLB address pool range
+      ansible.builtin.set_fact:
+        metallb_range: "{{ subnet_base }}.200-{{ subnet_base }}.220"
+
+    # -------------------
+    # MetalLB
+    # -------------------
+    - name: Install MetalLB manifests
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: /etc/kubernetes/admin.conf
+        src: https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+
+    - name: Wait for metallb controller rollout
+      ansible.builtin.command: >
+        kubectl --kubeconfig=/etc/kubernetes/admin.conf
+        -n metallb-system rollout status deployment/controller --timeout=180s
+      changed_when: false
+
+    - name: Configure MetalLB IPAddressPool (auto-discovered)
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: /etc/kubernetes/admin.conf
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: default-pool
+            namespace: metallb-system
+          spec:
+            addresses:
+              - "{{ metallb_range }}"
+
+    - name: Configure MetalLB L2Advertisement
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: /etc/kubernetes/admin.conf
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: default
+            namespace: metallb-system
+          spec:
+            ipAddressPools:
+              - default-pool
+
     # -------------------
     # Ingress Controller
     # -------------------
@@ -62,7 +126,7 @@
           logLevel: info
 
     # -------------------
-    # Ingress chart from your repo
+    # Ingress chart from repo
     # -------------------
     - name: Deploy ingress Helm chart
       kubernetes.core.helm:
