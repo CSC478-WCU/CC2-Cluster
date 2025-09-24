@@ -62,10 +62,11 @@
     - name: Save join command as global fact
       ansible.builtin.set_fact:
         worker_join_cmd: "{{ join_command.stdout }}"
+      delegate_to: localhost
       run_once: true
 
     - ansible.builtin.debug:
-        msg: "Worker join command is {{ worker_join_cmd }}"
+        msg: "Worker join command is {{ join_command.stdout }}"
 
     # ----------------------------
     # Install Flannel CNI (use admin.conf directly)
@@ -91,6 +92,6 @@
   become: yes
   tasks:
     - name: Join the cluster
-      ansible.builtin.command: "{{ worker_join_cmd }}"
+      ansible.builtin.command: "{{ hostvars['localhost']['worker_join_cmd'] }}"
       args:
         creates: /etc/kubernetes/kubelet.conf
