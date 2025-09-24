@@ -5,11 +5,20 @@
   hosts: kubeadmin
   become: yes
   tasks:
+    - name: Ensure repo parent exists
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/local"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
     - name: Clone repo
       ansible.builtin.git:
         repo: "https://github.com/csc478-wcu/cc2-cluster.git"
         dest: "/home/{{ ansible_user }}/local/repository"
         version: main
+        force: yes
 
 # ----------------------------
 # Initialize control-plane node
@@ -18,7 +27,12 @@
   hosts: kubeadmin
   become: yes
   tasks:
-    - name: Run kubeadm init
+    - name: Sanity check CRI (containerd)
+      ansible.builtin.command: crictl info
+      register: crictl_info
+      changed_when: false
+
+    - name: kubeadm init (containerd, flannel CIDR)
       ansible.builtin.command: >
         kubeadm init
         --pod-network-cidr=10.244.0.0/16
@@ -27,13 +41,13 @@
         creates: /etc/kubernetes/admin.conf
       register: kubeadm_init
 
-    - name: Create .kube directory
+    - name: Create .kube directory for SSH user
       ansible.builtin.file:
         path: /home/{{ ansible_user }}/.kube
         state: directory
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-        mode: 0755
+        mode: '0755'
 
     - name: Copy admin.conf to user kube config
       ansible.builtin.copy:
@@ -42,7 +56,7 @@
         remote_src: yes
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-        mode: 0644
+        mode: '0644'
 
     - name: Extract join command
       ansible.builtin.shell: kubeadm token create --print-join-command
@@ -57,12 +71,20 @@
         msg: "Worker join command is {{ join_command.stdout }}"
 
     # ----------------------------
-    # Install Flannel CNI
+    # Install Flannel CNI (use admin.conf directly)
     # ----------------------------
     - name: Install Flannel CNI
       kubernetes.core.k8s:
         state: present
         src: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+        kubeconfig: /etc/kubernetes/admin.conf
+
+    - name: Wait for flannel to roll out
+      ansible.builtin.command: >
+        kubectl --kubeconfig=/etc/kubernetes/admin.conf
+        -n kube-flannel rollout status ds/kube-flannel-ds --timeout=180s
+      changed_when: false
+      failed_when: false
 
 # ----------------------------
 # Join worker nodes
@@ -71,7 +93,7 @@
   hosts: workers
   become: yes
   tasks:
-    - name: Run kubeadm join
+    - name: Join the cluster
       ansible.builtin.command: "{{ hostvars['localhost'].worker_join_cmd }}"
       args:
         creates: /etc/kubernetes/kubelet.conf
