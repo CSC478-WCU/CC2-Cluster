@@ -59,18 +59,16 @@
       ansible.builtin.shell: kubeadm token create --print-join-command
       register: join_command
 
-    - name: Save join command as global fact
+    - name: Save join command globally (on localhost)
       ansible.builtin.set_fact:
         worker_join_cmd: "{{ join_command.stdout }}"
+        cacheable: true
       delegate_to: localhost
       run_once: true
 
     - ansible.builtin.debug:
         msg: "Worker join command is {{ join_command.stdout }}"
 
-    # ----------------------------
-    # Install Flannel CNI (use admin.conf directly)
-    # ----------------------------
     - name: Install Flannel CNI
       kubernetes.core.k8s:
         state: present
