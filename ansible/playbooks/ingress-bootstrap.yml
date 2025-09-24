@@ -67,7 +67,7 @@
     - name: Deploy ingress Helm chart
       kubernetes.core.helm:
         name: campusconnect-ingress
-        chart_ref: /home/{{ ansible_user }}/local/repository/helm/ingress
+        chart_ref: "/users/{{ ansible_user }}/local/repository/helm/ingress"
         release_namespace: default
         create_namespace: false
         kubeconfig: /etc/kubernetes/admin.conf
