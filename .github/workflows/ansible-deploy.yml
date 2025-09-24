@@ -19,13 +19,19 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
 
-      - name: Install Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
+      # -------------------------
+      # Cache ansible-galaxy collections
+      # -------------------------
+      - name: Cache Ansible Galaxy collections
+        uses: actions/cache@v4
+        with:
+          path: ~/.ansible/collections
+          key: ${{ runner.os }}-ansible-galaxy-${{ hashFiles('ansible/requirements.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-ansible-galaxy-
 
       - name: Install Ansible collections
-        run: ansible-galaxy collection install kubernetes.core
+        run: ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Recreate SSH key from secret
         run: |
