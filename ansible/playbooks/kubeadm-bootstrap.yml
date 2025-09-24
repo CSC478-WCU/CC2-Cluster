@@ -43,10 +43,10 @@
 
     - name: Create .kube directory for SSH user
       ansible.builtin.file:
-        path: "/users/{{ ansible_user }}/.kube"
+        path: "{{ ansible_env.HOME }}/.kube"
         state: directory
         owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        group: "{{ ansible_effective_group_id }}"
         mode: '0755'
 
     - name: Copy admin.conf to SSH user kube config
