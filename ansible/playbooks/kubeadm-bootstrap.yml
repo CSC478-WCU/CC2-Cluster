@@ -49,14 +49,14 @@
         group: "{{ ansible_effective_group_id }}"
         mode: '0755'
 
-    - name: Copy admin.conf to SSH user kube config
+    - name: Copy admin.conf to SSH user kube config 
       ansible.builtin.copy:
         src: /etc/kubernetes/admin.conf
-        dest: "/users/{{ ansible_user }}/.kube/config"
+        dest: "{{ ansible_env.HOME }}/.kube/config"
         remote_src: yes
         owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0600'
+        group: "{{ ansible_effective_group_id }}"
+        mode: '0644'
 
     - name: Extract join command
       ansible.builtin.shell: kubeadm token create --print-join-command
