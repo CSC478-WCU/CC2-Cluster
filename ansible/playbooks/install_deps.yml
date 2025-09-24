@@ -96,11 +96,9 @@
         state: present
         filename: containerd
 
-    - name: Install containerd + runc
+    - name: Install containerd
       ansible.builtin.apt:
-        name:
-          - containerd.io
-          - runc
+        name: containerd.io
         state: present
         update_cache: yes
 
