@@ -21,6 +21,7 @@
           - lsb-release
           - software-properties-common
           - git
+          - python3-pip
         state: present
 
     # -------------------
@@ -194,6 +195,17 @@
       ansible.builtin.command: /tmp/get-helm-3
       args:
         creates: /usr/local/bin/helm
+
+    # -------------------
+    # Python Kubernetes client (needed for kubernetes.core.k8s)
+    # -------------------
+    - name: Install Python Kubernetes dependencies (only on kubeadmin)
+      ansible.builtin.pip:
+        name:
+          - kubernetes==26.1.0
+          - openshift==0.13.2
+        executable: pip3
+      when: inventory_hostname in groups['kubeadmin']
 
     # -------------------
     # Verify installs
