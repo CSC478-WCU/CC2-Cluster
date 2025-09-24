@@ -3,24 +3,44 @@ name: Ansible Deploy (Reusable)
 on:
   workflow_call:
     inputs:
-      nodes_json: { required: true, type: string }
-      ssh_user: { required: true, type: string }
-      branch: { required: true, type: string }
+      nodes_json: { required: true, type: string } # Terraform outputs (map of hostnames --> IPs)
+      ssh_user: { required: true, type: string } # SSH username (CloudLab account)
+      branch: { required: true, type: string } # Git branch to deploy from
     secrets:
-      CLOUDLAB_PEM_B64: { required: true }
-      ANSIBLE_VAULT_PASSWORD: { required: true }
+      CLOUDLAB_PEM_B64: { required: true } # Base64-encoded private key for SSH
+      ANSIBLE_VAULT_PASSWORD: { required: true } # Vault password for secrets
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
+      # -------------------------
+      # Source code checkout
+      # -------------------------
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
 
       # -------------------------
-      # Cache ansible-galaxy collections
+      # SSH key setup
+      # -------------------------
+      - name: Recreate SSH key from secret
+        run: |
+          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
+          chmod 600 cloudlab_decrypted.pem
+        env:
+          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
+
+      # -------------------------
+      # Install Ansible CLI
+      # -------------------------
+      - name: Install Ansible
+        run: pip install ansible==10.3.0
+
+      # -------------------------
+      # Install required collections
       # -------------------------
       - name: Cache Ansible Galaxy collections
         uses: actions/cache@v4
@@ -32,40 +52,28 @@ jobs:
 
       - name: Install Ansible collections
         run: ansible-galaxy collection install -r ansible/requirements.yml
+        # Uses ansible/requirements.yml in repo
+        # Installs kubernetes.core, community.general, ansible.posix
 
-      - name: Recreate SSH key from secret
-        run: |
-          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
-          chmod 600 cloudlab_decrypted.pem
-        env:
-          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
-
-      - name: ansible.cfg
-        run: |
-          cat > ansible.cfg <<EOF
-          [defaults]
-          private_key_file = ${GITHUB_WORKSPACE}/cloudlab_decrypted.pem
-          host_key_checking = False
-          forks = 20
-          timeout = 600
-          interpreter_python = auto_silent
-
-          [ssh_connection]
-          pipelining = True
-          ssh_args = -o ControlMaster=auto -o ControlPersist=600s \
-                    -o ServerAliveInterval=30 -o ServerAliveCountMax=10
-          EOF
-
+      # -------------------------
+      # Vault password setup
+      # -------------------------
       - name: Write vault password file
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > .vault_pass.txt
           chmod 600 .vault_pass.txt
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        # .vault_pass.txt is referenced by ansible.cfg (vault_password_file)
 
+      # -------------------------
+      # Run Ansible bootstrap playbook
+      # -------------------------
       - name: Run cluster bootstrap
         run: |
-          ansible-playbook -i localhost, ansible/playbooks/bootstrap.yml \
-            --vault-password-file .vault_pass.txt \
+          ansible-playbook ansible/playbooks/bootstrap.yml \
             -e nodes_json='${{ inputs.nodes_json }}' \
-            -e ssh_user='${{ inputs.ssh_user }}'
+            -e ssh_user='${{ inputs.ssh_user }}' \
+            -e ansible_ssh_private_key_file=${GITHUB_WORKSPACE}/cloudlab_decrypted.pem
+        # Passes in dynamic vars (nodes_json, ssh_user)
+        # Injects private key via ansible_ssh_private_key_file

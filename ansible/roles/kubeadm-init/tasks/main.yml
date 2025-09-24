@@ -1,0 +1,47 @@
+---
+# roles/kubeadm-init/tasks/main.yml
+# ---------------------------------
+# Initialize Kubernetes control-plane node with kubeadm.
+
+- name: Sanity check CRI
+  ansible.builtin.command: crictl info
+  changed_when: false
+
+- name: Run kubeadm init
+  ansible.builtin.command: >
+    kubeadm init
+    --pod-network-cidr=10.244.0.0/16
+    --cri-socket=unix:///var/run/containerd/containerd.sock
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Ensure .kube directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Copy kubeconfig for SSH user
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Generate kubeadm join command
+  ansible.builtin.shell: kubeadm token create --print-join-command
+  register: join_command
+  no_log: true
+
+- name: Save join script locally
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.copy:
+    dest: "/tmp/kubeadm_join.sh"
+    content: |
+      #!/bin/bash
+      {{ join_command.stdout }}
+    mode: '0755'
+  no_log: true
