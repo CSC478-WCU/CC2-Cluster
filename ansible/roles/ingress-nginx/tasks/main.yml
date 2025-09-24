@@ -1,0 +1,25 @@
+---
+# roles/ingress-nginx/tasks/main.yml
+# ----------------------------------
+# Install NGINX ingress controller with Helm.
+
+- name: Add ingress-nginx repo
+  kubernetes.core.helm_repository:
+    name: ingress-nginx
+    repo_url: https://kubernetes.github.io/ingress-nginx
+
+- name: Deploy ingress-nginx
+  kubernetes.core.helm:
+    name: ingress-nginx
+    chart_ref: ingress-nginx/ingress-nginx
+    release_namespace: ingress-nginx
+    create_namespace: true
+    kubeconfig: /etc/kubernetes/admin.conf
+    wait: true
+    timeout: "600s"
+    values:
+      controller:
+        service:
+          type: LoadBalancer
+        admissionWebhooks:
+          enabled: false

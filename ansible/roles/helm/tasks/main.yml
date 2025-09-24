@@ -1,0 +1,15 @@
+---
+# roles/helm/tasks/main.yml
+# -------------------------
+# Install Helm client (used for managing cluster charts).
+
+- name: Download Helm installer
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    dest: /tmp/get-helm-3
+    mode: '0755'
+
+- name: Install Helm
+  ansible.builtin.command: /tmp/get-helm-3
+  args:
+    creates: /usr/local/bin/helm

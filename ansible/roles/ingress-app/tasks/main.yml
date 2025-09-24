@@ -1,0 +1,13 @@
+---
+# roles/ingress-app/tasks/main.yml
+# --------------------------------
+# Deploy custom ingress chart for CampusConnect.
+
+- name: Deploy campusconnect ingress chart
+  kubernetes.core.helm:
+    name: campusconnect-ingress
+    chart_ref: "/users/{{ ansible_user }}/local/repository/helm/ingress"
+    release_namespace: default
+    kubeconfig: /etc/kubernetes/admin.conf
+    wait: true
+    timeout: "600s"

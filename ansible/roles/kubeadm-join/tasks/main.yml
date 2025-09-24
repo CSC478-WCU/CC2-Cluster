@@ -1,0 +1,15 @@
+---
+# roles/kubeadm-join/tasks/main.yml
+# ---------------------------------
+# Join worker nodes to Kubernetes cluster.
+
+- name: Copy join script from localhost
+  ansible.builtin.copy:
+    src: "/tmp/kubeadm_join.sh"
+    dest: "/tmp/kubeadm_join.sh"
+    mode: '0755'
+
+- name: Run join script
+  ansible.builtin.command: bash /tmp/kubeadm_join.sh
+  args:
+    creates: /etc/kubernetes/kubelet.conf

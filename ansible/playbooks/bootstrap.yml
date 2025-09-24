@@ -3,20 +3,57 @@
   connection: local
   gather_facts: false
   vars:
-    nodes: "{{ nodes_json | from_json }}"   # {"kubeadm":"155.98.38.240","worker1":"155.98.36.94","worker2":"155.98.36.95"}
+    nodes: "{{ nodes_json | from_json }}"
     ssh_user: "{{ ssh_user | default('deploy') }}"
   tasks:
-    - name: Register each node in inventory
+    - name: Register CloudLab nodes
       add_host:
-        name: "{{ item.key }}"                 # kubeadm / worker1 / worker2
-        ansible_host: "{{ item.value }}"       # IP address
-        ansible_user: "{{ ssh_user }}"         # SSH user
+        name: "{{ item.key }}"
+        ansible_host: "{{ item.value }}"
+        ansible_user: "{{ ssh_user }}"
         groups: >-
           {{ 'workers' if item.key != 'kubeadm' else 'kubeadmin' }},
           cloudlab_nodes
       loop: "{{ nodes | dict2items }}"
 
-# hand off to the cluster setup plays
-- import_playbook: install_deps.yml
-- import_playbook: kubeadm-bootstrap.yml
-- import_playbook: ingress-bootstrap.yml
+# ----------------------------
+# Phase 1: Base System
+# ----------------------------
+- hosts: cloudlab_nodes
+  become: yes
+  roles:
+    - base
+    - containerd
+    - kube-tools
+    - helm
+
+- hosts: kubeadmin
+  become: yes
+  roles:
+    - python-k8s
+
+# ----------------------------
+# Phase 2: Cluster Init
+# ----------------------------
+- hosts: kubeadmin
+  become: yes
+  roles:
+    - kubeadm-init
+    - cni-flannel
+
+- hosts: workers
+  become: yes
+  roles:
+    - kubeadm-join
+
+# ----------------------------
+# Phase 3: Networking + Ingress
+# ----------------------------
+- hosts: kubeadmin
+  become: yes
+  roles:
+    - metallb
+    - ingress-nginx
+    - external-dns
+    - ingress-app
+

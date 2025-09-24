@@ -1,0 +1,32 @@
+---
+# roles/kube-tools/tasks/main.yml
+# -------------------------------
+# Install Kubernetes CLI and node tools.
+
+- name: Install kubeadm, kubelet, kubectl, cri-tools
+  ansible.builtin.apt:
+    name:
+      - kubeadm
+      - kubelet
+      - kubectl
+      - cri-tools
+    state: present
+    update_cache: yes
+
+- name: Hold kube packages at installed version
+  ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl cri-tools
+  changed_when: false
+
+- name: Configure crictl to use containerd
+  ansible.builtin.copy:
+    dest: /etc/crictl.yaml
+    content: |
+      runtime-endpoint: unix:///run/containerd/containerd.sock
+      image-endpoint: unix:///run/containerd/containerd.sock
+      timeout: 10
+      debug: false
+    mode: '0644'
+
+- name: Verify CRI is responsive
+  ansible.builtin.command: crictl info
+  changed_when: false

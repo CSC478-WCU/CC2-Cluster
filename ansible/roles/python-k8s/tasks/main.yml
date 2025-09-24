@@ -1,0 +1,12 @@
+---
+# roles/python-k8s/tasks/main.yml
+# -------------------------------
+# Python dependencies for kubernetes.core modules.
+# Only runs on kubeadmin node.
+
+- name: Install Python Kubernetes libraries
+  ansible.builtin.pip:
+    name:
+      - kubernetes==26.1.0
+      - openshift==0.13.2
+    executable: pip3
