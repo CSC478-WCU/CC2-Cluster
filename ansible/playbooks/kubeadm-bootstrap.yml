@@ -61,7 +61,10 @@
 
     - name: Save join command to local file
       delegate_to: localhost
-      copy:
+      run_once: true
+      vars:
+        ansible_connection: local
+      ansible.builtin.copy:
         dest: "/tmp/kubeadm_join.sh"
         content: "{{ join_command.stdout }}\n"
         mode: '0755'
