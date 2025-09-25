@@ -26,12 +26,12 @@ jobs:
       # -------------------------
       # SSH key setup
       # -------------------------
-      - name: Recreate SSH key from secret
+      - name: Write Ansible Vault password file
         run: |
-          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
-          chmod 600 cloudlab_decrypted.pem
+          echo "$ANSIBLE_VAULT_PASSWORD" > ${{ github.workspace }}/ansible/.vault_pass.txt
+          chmod 600 ${{ github.workspace }}/ansible/.vault_pass.txt
         env:
-          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASS }}
 
       # -------------------------
       # Install Ansible CLI
