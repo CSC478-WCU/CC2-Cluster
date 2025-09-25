@@ -29,7 +29,6 @@
     path: "/home/{{ ansible_ssh_user }}/.kube"
     state: directory
     owner: "{{ ansible_ssh_user }}"
-    group: "{{ ansible_ssh_user }}"
     mode: '0755'
   become: yes
 
@@ -39,7 +38,6 @@
     dest: "/home/{{ ansible_ssh_user }}/.kube/config"
     remote_src: yes
     owner: "{{ ansible_ssh_user }}"
-    group: "{{ ansible_ssh_user }}"
     mode: '0644'
   become: yes
 
