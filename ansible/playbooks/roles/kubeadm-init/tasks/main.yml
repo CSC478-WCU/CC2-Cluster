@@ -11,9 +11,18 @@
   ansible.builtin.command: >
     kubeadm init
     --pod-network-cidr=10.244.0.0/16
-    --cri-socket=unix:///var/run/containerd/containerd.sock
+    --cri-socket=unix:///run/containerd/containerd.sock
+    --v=5
+    --ignore-preflight-errors=all
   args:
     creates: /etc/kubernetes/admin.conf
+  register: kubeadm_init_result
+  failed_when: kubeadm_init_result.rc != 0
+
+- name: Debug kubeadm init output
+  ansible.builtin.debug:
+    var: kubeadm_init_result
+  when: kubeadm_init_result.rc != 0
 
 - name: Ensure .kube directory exists
   ansible.builtin.file:
