@@ -20,9 +20,17 @@
   register: ip_addr
   changed_when: false
 
-- name: Extract subnet base
+- name: Extract node CIDR
   ansible.builtin.set_fact:
-    node_cidr: "{{ ip_addr.stdout | regex_search('inet ([0-9.]+/[0-9]+)', '\\1') }}"
+    node_cidr: "{{ ip_addr.stdout | regex_search('inet (\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+)', '\\1') }}"
+  failed_when: node_cidr is not defined or node_cidr == ''
+
+- name: Debug extracted CIDR
+  ansible.builtin.debug:
+    msg: "Node CIDR detected: {{ node_cidr }}"
+
+- name: Compute MetalLB range
+  ansible.builtin.set_fact:
     subnet_base: "{{ node_cidr.split('/')[0].rsplit('.', 1)[0] }}"
     metallb_range: "{{ subnet_base }}.200-{{ subnet_base }}.220"
 
