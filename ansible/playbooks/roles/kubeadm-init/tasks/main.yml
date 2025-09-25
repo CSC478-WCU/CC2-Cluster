@@ -42,7 +42,6 @@
 - name: Generate kubeadm join command
   ansible.builtin.shell: kubeadm token create --print-join-command
   register: join_command
-  no_log: true
 
 - name: Save join script locally
   delegate_to: localhost
@@ -53,4 +52,3 @@
       #!/bin/bash
       {{ join_command.stdout }}
     mode: '0755'
-  no_log: true
