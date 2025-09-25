@@ -30,16 +30,32 @@
   register: admin_conf_stat
   failed_when: not admin_conf_stat.stat.exists
 
-- name: Debug home directory paths
-  ansible.builtin.debug:
-    msg: |
-      ansible_env.HOME: {{ ansible_env.HOME }}
-      ansible_ssh_user: {{ ansible_ssh_user }}
-      Target .kube path: {{ ansible_env.HOME }}/.kube
-
-- name: Ensure .kube directory exists
+# -----------------------
+# Copy for root (default)
+# -----------------------
+- name: Ensure .kube directory exists for root
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.kube"
+    path: "/root/.kube"
+    state: directory
+    owner: root
+    mode: '0755'
+  become: yes
+
+- name: Copy kubeconfig for root
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/root/.kube/config"
+    remote_src: yes
+    owner: root
+    mode: '0644'
+  become: yes
+
+# ----------------------------
+# Copy for SSH user (CloudLab)
+# ----------------------------
+- name: Ensure .kube directory exists for SSH user
+  ansible.builtin.file:
+    path: "/users/{{ ansible_ssh_user }}/.kube"
     state: directory
     owner: "{{ ansible_ssh_user }}"
     mode: '0755'
@@ -48,12 +64,15 @@
 - name: Copy kubeconfig for SSH user
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_env.HOME }}/.kube/config"
+    dest: "/users/{{ ansible_ssh_user }}/.kube/config"
     remote_src: yes
     owner: "{{ ansible_ssh_user }}"
     mode: '0644'
   become: yes
 
+# -----------------------
+# Control plane checks
+# -----------------------
 - name: Wait for control plane to be ready
   ansible.builtin.command: kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
   register: kubectl_nodes
