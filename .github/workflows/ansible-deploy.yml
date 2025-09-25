@@ -26,12 +26,12 @@ jobs:
       # -------------------------
       # SSH key setup
       # -------------------------
-      - name: Write Ansible Vault password file
+      - name: Recreate SSH key from secret
         run: |
-          echo "$ANSIBLE_VAULT_PASSWORD" > ${{ github.workspace }}/ansible/.vault_pass.txt
-          chmod 600 ${{ github.workspace }}/ansible/.vault_pass.txt
+          echo "${CLOUDLAB_PEM_B64}" | base64 -d > cloudlab_decrypted.pem
+          chmod 600 cloudlab_decrypted.pem
         env:
-          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASS }}
+          CLOUDLAB_PEM_B64: ${{ secrets.CLOUDLAB_PEM_B64 }}
 
       # -------------------------
       # Install Ansible CLI
@@ -60,11 +60,11 @@ jobs:
       # -------------------------
       - name: Write vault password file
         run: |
-          echo "$ANSIBLE_VAULT_PASSWORD" > ansible/.vault_pass.txt
-          chmod 600 ansible/.vault_pass.txt
+          mkdir -p "${GITHUB_WORKSPACE}/ansible"
+          echo "$ANSIBLE_VAULT_PASSWORD" > "${GITHUB_WORKSPACE}/ansible/.vault_pass.txt"
+          chmod 600 "${GITHUB_WORKSPACE}/ansible/.vault_pass.txt"
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-        # .vault_pass.txt is referenced by ansible.cfg (vault_password_file)
 
       # -------------------------
       # Run Ansible bootstrap playbook
