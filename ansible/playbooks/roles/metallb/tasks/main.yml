@@ -11,6 +11,10 @@
   ansible.builtin.set_fact:
     primary_iface: "{{ default_route.stdout | regex_search('dev (\\S+)', '\\1') }}"
 
+- name: Debug detected primary interface
+  ansible.builtin.debug:
+    msg: "Primary interface detected: {{ primary_iface }}"
+
 - name: Get primary interface CIDR
   ansible.builtin.command: ip -4 addr show dev {{ primary_iface }}
   register: ip_addr
@@ -57,4 +61,7 @@
       kind: L2Advertisement
       metadata:
         name: default
-        namespace: metallb
+        namespace: metallb-system
+      spec:
+        ipAddressPools:
+          - default-pool
