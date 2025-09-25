@@ -3,6 +3,17 @@
 # -------------------------------
 # Install Kubernetes CLI and node tools.
 
+- name: Add Kubernetes GPG key
+  ansible.builtin.apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+    state: present
+
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+    state: present
+    update_cache: yes
+
 - name: Install kubeadm, kubelet, kubectl, cri-tools
   ansible.builtin.apt:
     name:
