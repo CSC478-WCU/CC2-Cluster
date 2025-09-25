@@ -26,18 +26,22 @@
 
 - name: Ensure .kube directory exists
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.kube"
+    path: "/home/{{ ansible_ssh_user }}/.kube"
     state: directory
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
     mode: '0755'
+  become: yes
 
 - name: Copy kubeconfig for SSH user
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_env.HOME }}/.kube/config"
+    dest: "/home/{{ ansible_ssh_user }}/.kube/config"
     remote_src: yes
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
     mode: '0644'
+  become: yes
 
 - name: Wait for control plane to be ready
   ansible.builtin.command: kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
