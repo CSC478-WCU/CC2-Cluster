@@ -51,9 +51,12 @@
 # ----------------------------
 - hosts: kubeadmin
   become: yes
+  vars_files: 
+    - ../vault/cloudflare.yml
   roles:
     - metallb
     - ingress-nginx
     - external-dns
     - ingress-app
+  
 
