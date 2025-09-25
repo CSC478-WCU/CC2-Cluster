@@ -64,3 +64,19 @@
     regexp: '^(?!#)(.+\s+swap\s+.+)$'
     replace: '# \1'
   failed_when: false
+
+# --- Clone CampusConnect Helm charts ---
+- name: Ensure local repository directory exists
+  ansible.builtin.file:
+    path: "/users/{{ ansible_ssh_user }}/local/repository"
+    state: directory
+    owner: "{{ ansible_ssh_user }}"
+    mode: '0755'
+
+- name: Clone CampusConnect repo (for Helm charts)
+  ansible.builtin.git:
+    repo: "https://github.com/CSC478-WCU/CC2-Cluster.git"
+    dest: "/users/{{ ansible_ssh_user }}/local/repository"
+    version: "{{ branch | default('main') }}"
+    force: yes
+    update: yes
