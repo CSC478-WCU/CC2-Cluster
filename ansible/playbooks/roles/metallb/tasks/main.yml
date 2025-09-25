@@ -9,7 +9,7 @@
 
 - name: Extract default interface name
   ansible.builtin.set_fact:
-    primary_iface: "{{ default_route.stdout | regex_search('dev (\\S+)', '\\1') }}"
+    primary_iface: "{{ (default_route.stdout | regex_search('dev (\\S+)', '\\1')) | first }}"
 
 - name: Debug detected primary interface
   ansible.builtin.debug:
