@@ -1,10 +1,18 @@
----
 # roles/metallb/tasks/main.yml
 # ----------------------------
 # Install and configure MetalLB for LoadBalancer services.
 
+- name: Get default interface
+  ansible.builtin.command: ip route show default
+  register: default_route
+  changed_when: false
+
+- name: Extract default interface name
+  ansible.builtin.set_fact:
+    primary_iface: "{{ default_route.stdout | regex_search('dev (\\S+)', '\\1') }}"
+
 - name: Get primary interface CIDR
-  ansible.builtin.command: ip -4 addr show dev eno1
+  ansible.builtin.command: ip -4 addr show dev {{ primary_iface }}
   register: ip_addr
   changed_when: false
 
@@ -49,7 +57,4 @@
       kind: L2Advertisement
       metadata:
         name: default
-        namespace: metallb-system
-      spec:
-        ipAddressPools:
-          - default-pool
+        namespace: metallb
