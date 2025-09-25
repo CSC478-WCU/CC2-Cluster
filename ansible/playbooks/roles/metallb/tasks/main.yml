@@ -29,10 +29,17 @@
   ansible.builtin.debug:
     msg: "Node CIDR detected: {{ node_cidr }}"
 
-- name: Compute MetalLB range
+- name: Compute subnet base
   ansible.builtin.set_fact:
     subnet_base: "{{ node_cidr.split('/')[0].rsplit('.', 1)[0] }}"
+
+- name: Compute MetalLB range
+  ansible.builtin.set_fact:
     metallb_range: "{{ subnet_base }}.200-{{ subnet_base }}.220"
+
+- name: Debug MetalLB range
+  ansible.builtin.debug:
+    msg: "MetalLB range: {{ metallb_range }}"
 
 - name: Install MetalLB manifests
   kubernetes.core.k8s:
