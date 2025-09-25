@@ -22,7 +22,7 @@
 
 - name: Extract node CIDR
   ansible.builtin.set_fact:
-    node_cidr: "{{ ip_addr.stdout | regex_search('inet (\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+)', '\\1') }}"
+    node_cidr: "{{ (ip_addr.stdout | regex_search('inet (\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+)', '\\1')) | first }}"
   failed_when: node_cidr is not defined or node_cidr == ''
 
 - name: Debug extracted CIDR
