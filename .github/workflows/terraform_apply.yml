@@ -134,7 +134,9 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve \
+          -var="aggregate=${{ inputs.aggregate }}" \
+          -var="hardware_type=${{ inputs.hardware_type }}" \
 
       - name: Show outputs (human)
         working-directory: ./infra
