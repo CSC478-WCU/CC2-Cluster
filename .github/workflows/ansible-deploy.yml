@@ -60,7 +60,7 @@ jobs:
       # -------------------------
       - name: Write vault password file
         run: |
-          echo "$ANSIBLE_VAULT_PASSWORD" > .vault_pass.txt
+          echo "$ANSIBLE_VAULT_PASSWORD" > ansible/.vault_pass.txt
           chmod 600 ansible/.vault_pass.txt
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
