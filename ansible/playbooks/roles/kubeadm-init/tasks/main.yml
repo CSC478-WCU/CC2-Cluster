@@ -39,9 +39,27 @@
     owner: "{{ ansible_user }}"
     mode: '0644'
 
+- name: Wait for control plane to be ready
+  ansible.builtin.command: kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
+  register: kubectl_nodes
+  until: kubectl_nodes.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Wait for kube-system pods to be ready
+  ansible.builtin.command: kubectl get pods -n kube-system --kubeconfig=/etc/kubernetes/admin.conf
+  register: kubectl_pods
+  until: kubectl_pods.rc == 0
+  retries: 10
+  delay: 5
+  changed_when: false
+
 - name: Generate kubeadm join command
   ansible.builtin.shell: kubeadm token create --print-join-command
   register: join_command
+  timeout: 60
+  no_log: true
 
 - name: Save join script locally
   delegate_to: localhost
@@ -52,3 +70,4 @@
       #!/bin/bash
       {{ join_command.stdout }}
     mode: '0755'
+  no_log: true
