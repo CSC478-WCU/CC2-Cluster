@@ -24,9 +24,22 @@
     var: kubeadm_init_result
   when: kubeadm_init_result.rc != 0
 
+- name: Verify admin.conf exists
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: admin_conf_stat
+  failed_when: not admin_conf_stat.stat.exists
+
+- name: Debug home directory paths
+  ansible.builtin.debug:
+    msg: |
+      ansible_env.HOME: {{ ansible_env.HOME }}
+      ansible_ssh_user: {{ ansible_ssh_user }}
+      Target .kube path: {{ ansible_env.HOME }}/.kube
+
 - name: Ensure .kube directory exists
   ansible.builtin.file:
-    path: "/home/{{ ansible_ssh_user }}/.kube"
+    path: "{{ ansible_env.HOME }}/.kube"
     state: directory
     owner: "{{ ansible_ssh_user }}"
     mode: '0755'
@@ -35,7 +48,7 @@
 - name: Copy kubeconfig for SSH user
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: "/home/{{ ansible_ssh_user }}/.kube/config"
+    dest: "{{ ansible_env.HOME }}/.kube/config"
     remote_src: yes
     owner: "{{ ansible_ssh_user }}"
     mode: '0644'
