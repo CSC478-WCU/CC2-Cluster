@@ -4,8 +4,7 @@
 │       ├── ansible-deploy.yml
 │       ├── terraform_apply.yml
 │       └── update-repo-map.yml
-├── .repo_map_block.md
-├── .repo_tree.txt
+├── Deliverable1.pdf
 ├── LICENSE
 ├── README.md
 ├── ansible
@@ -43,4 +42,4 @@
     ├── providers.tf
     └── variables.tf
 
-24 directories, 20 files
+24 directories, 19 files

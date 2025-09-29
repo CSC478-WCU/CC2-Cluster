@@ -10,8 +10,7 @@ Campus Connect 2 Cluster &amp; CI/CD Repository
 │       ├── ansible-deploy.yml
 │       ├── terraform_apply.yml
 │       └── update-repo-map.yml
-├── .repo_map_block.md
-├── .repo_tree.txt
+├── Deliverable1.pdf
 ├── LICENSE
 ├── README.md
 ├── ansible
@@ -49,7 +48,7 @@ Campus Connect 2 Cluster &amp; CI/CD Repository
     ├── providers.tf
     └── variables.tf
 
-24 directories, 20 files
+24 directories, 19 files
 ```
 <!--REPO_MAP_END --> 
 ## Architecture Diagram: 
