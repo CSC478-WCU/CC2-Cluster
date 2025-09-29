@@ -29,32 +29,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y tree
 
-      - name: Generate tree (ignore .git and .repo_* files)
+      - name: Generate repo map (to temp)
+        id: gen
         shell: bash
         run: |
           L="${{ inputs.L }}"
           [[ "$L" =~ ^[0-9]+$ ]] || L=3
-          # -I excludes patterns anywhere; '|' separates multiple patterns
-          tree -a -I ".git|.repo_*" -L "$L" > .repo_tree.txt
-
-      - name: Build code block (without markers)
-        run: |
+          MAP_FILE="$(mktemp)"
           {
             echo '```bash'
-            cat .repo_tree.txt
+            # -I ".git" excludes any .git dir anywhere
+            tree -a -I ".git" -L "$L"
             echo '```'
-          } > .repo_map_block.md
+          } > "$MAP_FILE"
+          echo "MAP_FILE=$MAP_FILE" >> "$GITHUB_ENV"
 
-      - name: Update README between markers
+      - name: Update README between markers (preserve markers)
         shell: bash
         run: |
-          START_RE='<!-- *REPO_MAP_START *-->'
-          END_RE='<!-- *REPO_MAP_END *-->'
+          START_RE='<!--[[:space:]]*REPO_MAP_START[[:space:]]*-->'
+          END_RE='<!--[[:space:]]*REPO_MAP_END[[:space:]]*-->'
+          BLOCK_FILE="${MAP_FILE}"
+
           if grep -Eq "$START_RE" README.md && grep -Eq "$END_RE" README.md; then
-            awk -v startre="$START_RE" -v endre="$END_RE" '
+            awk -v startre="$START_RE" -v endre="$END_RE" -v f="$BLOCK_FILE" '
               BEGIN { inblk=0 }
               {
-                if ($0 ~ startre) { print; system("cat .repo_map_block.md"); inblk=1; next }
+                if ($0 ~ startre) { print; system("cat " f); inblk=1; next }
                 if ($0 ~ endre && inblk==1) { print; inblk=0; next }
                 if (inblk==0) print
               }
@@ -63,14 +64,19 @@ jobs:
             echo "Markers not found; no change." >&2
           fi
 
-      - name: Commit and push (if changed)
+      - name: Ensure temp files are not tracked (clean up past runs)
         run: |
-          if git diff --quiet; then
-            echo "No changes."
+          git rm -f --cached --ignore-unmatch .repo_tree.txt .repo_map_block.md || true
+
+      - name: Commit and push (README only)
+        shell: bash
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "No README changes."
           else
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add README.md .repo_tree.txt .repo_map_block.md
+            git add README.md
             git commit -m "docs: update repository map (L=${{ inputs.L }})"
             git push
           fi
