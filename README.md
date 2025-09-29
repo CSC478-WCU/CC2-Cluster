@@ -5,173 +5,12 @@ Campus Connect 2 Cluster &amp; CI/CD Repository
 <!-- REPO_MAP_START -->
 ```bash
 .
-├── .git
-│   ├── FETCH_HEAD
-│   ├── HEAD
-│   ├── config
-│   ├── config.worktree
-│   ├── description
-│   ├── hooks
-│   │   ├── applypatch-msg.sample
-│   │   ├── commit-msg.sample
-│   │   ├── fsmonitor-watchman.sample
-│   │   ├── post-update.sample
-│   │   ├── pre-applypatch.sample
-│   │   ├── pre-commit.sample
-│   │   ├── pre-merge-commit.sample
-│   │   ├── pre-push.sample
-│   │   ├── pre-rebase.sample
-│   │   ├── pre-receive.sample
-│   │   ├── prepare-commit-msg.sample
-│   │   ├── push-to-checkout.sample
-│   │   ├── sendemail-validate.sample
-│   │   └── update.sample
-│   ├── index
-│   ├── info
-│   │   └── exclude
-│   ├── logs
-│   │   ├── HEAD
-│   │   └── refs
-│   │       ├── heads
-│   │       └── remotes
-│   ├── objects
-│   │   ├── 02
-│   │   │   └── 90124d209f520baad52c9d7913534e63685c79
-│   │   ├── 0f
-│   │   │   └── 0bc897e42e646b2f9700d3c03285735d82bf13
-│   │   ├── 13
-│   │   │   ├── 141d8beb5038cd9bf1fa3491bf090dcf0cc5da
-│   │   │   └── cfabe9b7f4465dee97e8025ad3da907f601ffe
-│   │   ├── 16
-│   │   │   └── 80dcb4009c84511a92f1e5f76e46f1a4c80aad
-│   │   ├── 21
-│   │   │   └── b5f2932c8428c2584786f526f689bfe058e696
-│   │   ├── 22
-│   │   │   └── 5c15d0a67fbabbfcdaf5fccccf7a3289554b57
-│   │   ├── 25
-│   │   │   └── f3693a2ad75d9c500f019bdf3e401db0dfae2b
-│   │   ├── 29
-│   │   │   └── a164fb779e6acefabd7eaf3bc6e47374894320
-│   │   ├── 32
-│   │   │   └── 0b313b027cf04d0f73f065c30b3dc1fef4a201
-│   │   ├── 34
-│   │   │   └── 6697222a6222bb64948bc0187f1f7acbc33237
-│   │   ├── 38
-│   │   │   └── 14a6e64dfc7635aed15fac72f4f31cec9cac36
-│   │   ├── 3b
-│   │   │   └── 04f1a8a0487fad18972a8c40479a327bfdca36
-│   │   ├── 3d
-│   │   │   └── 926f60c1e5dcec707cd03dbf5fe2ff9caf6518
-│   │   ├── 3e
-│   │   │   └── 6b405e65ee50509ce9f9f3b282d55a20a481c5
-│   │   ├── 40
-│   │   │   ├── 2b634f4273869a037ec5b32044e3424938635b
-│   │   │   └── 6c0142c4ec14534b93be0d247d816254389a68
-│   │   ├── 42
-│   │   │   └── 99b3456325c381bb8c58c9f6438f0378895b95
-│   │   ├── 45
-│   │   │   ├── 05e0c65d5a1d88a8a3d9d9ceca08bfe88656bc
-│   │   │   └── 9ced7bb43b1ec6ffe37f57997f32e79a549eb1
-│   │   ├── 4d
-│   │   │   ├── 1fc4b0ecaca5cccfc91d505a5ac0a1c99c69fc
-│   │   │   └── 35cafbc150aa0c35136eed06f59e6ec17f2c50
-│   │   ├── 58
-│   │   │   ├── 4cfe1b392bbc84456c056313cdd40778312a58
-│   │   │   └── bbcb54ac258b5515199b9c31f1724c62366527
-│   │   ├── 5e
-│   │   │   └── 4df9d3ecf037c695dfcf2f0722716a969c2e0d
-│   │   ├── 60
-│   │   │   └── aefb1a46758fb13b1c205e632e1ddb59e99439
-│   │   ├── 64
-│   │   │   └── 6d4a7acebfcab4a6abc65e090e92820775136e
-│   │   ├── 65
-│   │   │   └── 804c183e6a4db74214f4b8168841ac497b1ab5
-│   │   ├── 77
-│   │   │   └── ed3c7a00d4796a9e6f3b3dddcee43561e8412e
-│   │   ├── 78
-│   │   │   └── d478095d8157595ab5abe2ca9aecda6e26cc64
-│   │   ├── 79
-│   │   │   └── a653f4985f33a402cc519dfcf14c997c0e4a5e
-│   │   ├── 7a
-│   │   │   ├── 84cbcd8d0d392f7280eca09b1f2b000bb6f9ae
-│   │   │   ├── d5fae51af1d6834e086a3e84fe5fedbfec8dc0
-│   │   │   └── e87ef39806ba0cd97729a763f60048e7bd14ca
-│   │   ├── 7c
-│   │   │   └── 8d907089ab073256293e3372837b06b47d4c9f
-│   │   ├── 83
-│   │   │   └── af91611e030727d17c5f67a04613fee70e8c68
-│   │   ├── 8f
-│   │   │   └── 22a7a266d24b22f5de023de27b0062ee33319f
-│   │   ├── a1
-│   │   │   └── d09b60e9c9794fa54afb115a8baa1e61b407bd
-│   │   ├── a2
-│   │   │   └── d21a6201530f2e2bea8274e4bd7d8fbcdbdfa5
-│   │   ├── a7
-│   │   │   └── 601ebab7f179e25c1e43ac9a0ce08467de15d4
-│   │   ├── a8
-│   │   │   └── e2ea884cfb885b0d3a3a44c2cdae081794cf72
-│   │   ├── b3
-│   │   │   └── 2351498465a000fc57982b1cec672367c191dc
-│   │   ├── b8
-│   │   │   └── 13dd8336bfbd158ac59488bc140797517b6405
-│   │   ├── bd
-│   │   │   ├── 09ac5076fab8613393f0ae70d03cca376bb994
-│   │   │   └── 65a50068b786a2f257de5327fb34d2d7e09655
-│   │   ├── c1
-│   │   │   └── 387b24e902837b2139a1b506242fd68612c26b
-│   │   ├── c4
-│   │   │   ├── 8db3fab5751146aa01443174b7b0c5e6503bb8
-│   │   │   └── f406a341ad6086769f3acffd109e8b60a6d631
-│   │   ├── c7
-│   │   │   └── 8c4dca1215895c98e6dc40c438f5c3a690f102
-│   │   ├── c9
-│   │   │   └── 1ea97acaa2227b3031610045d2fa7a902bea36
-│   │   ├── d1
-│   │   │   └── bffc6eb21e54cf5e67b415e228c6d74f3cba69
-│   │   ├── d4
-│   │   │   └── d85a4cbb6c4a1d7489b151ff77dd189d7555ed
-│   │   ├── da
-│   │   │   └── 1ddcacb98e76439c6706beb97ff7b4e524cea5
-│   │   ├── de
-│   │   │   └── ff8850f1161e904e7022ad43ed5b0a3800f5de
-│   │   ├── e0
-│   │   │   └── 664348be8df924948a2a7f18fe985648124523
-│   │   ├── e2
-│   │   │   └── fe8c285433d48a424fed4ce4bef29b9852232f
-│   │   ├── e3
-│   │   │   ├── bedda553261a7e350ee3de96c2bf8f85460111
-│   │   │   └── c410c6ab53ca99b0fb10260ef770506b840289
-│   │   ├── e4
-│   │   │   └── 85f3d9cfe4db3d03c05ec0bc2d326f385aecb4
-│   │   ├── e6
-│   │   │   └── e40c4779aba1b11ae9f2726dbcf6fc3e1406ff
-│   │   ├── eb
-│   │   │   └── de1f7371eec44ad83be8bd225bfae4b07bb72d
-│   │   ├── ee
-│   │   │   ├── 045a28fddcaf2ef5c8bcda6050095d21d3f854
-│   │   │   └── 7107913cf9bdf2d3818e80a24a2bdb51c641c6
-│   │   ├── f0
-│   │   │   └── 28bc8f55c2265470c5718fcb9f36d054bfa1ee
-│   │   ├── f2
-│   │   │   └── 473ac56c10048a152a9c91c2a1d862ac0a7d11
-│   │   ├── fc
-│   │   │   └── d69d60a3a9d404a600c71aad679c730604176c
-│   │   ├── fd
-│   │   │   └── eae39886f71a988fe95c61708b64dd52cef7a4
-│   │   ├── info
-│   │   └── pack
-│   ├── refs
-│   │   ├── heads
-│   │   │   └── main
-│   │   ├── remotes
-│   │   │   └── origin
-│   │   └── tags
-│   └── shallow
 ├── .github
 │   └── workflows
 │       ├── ansible-deploy.yml
 │       ├── terraform_apply.yml
 │       └── update-repo-map.yml
+├── .repo_map_block.md
 ├── .repo_tree.txt
 ├── LICENSE
 ├── README.md
@@ -210,7 +49,7 @@ Campus Connect 2 Cluster &amp; CI/CD Repository
     ├── providers.tf
     └── variables.tf
 
-95 directories, 110 files
+24 directories, 20 files
 ```
 <!--REPO_MAP_END --> 
 ## Architecture Diagram: 
