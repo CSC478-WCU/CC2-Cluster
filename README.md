@@ -1,18 +1,11 @@
 # CC2-Cluster
 Campus Connect 2 Cluster &amp; CI/CD Repository
 
-### Topology: 
-<img width="695" height="369" alt="image" src="https://github.com/user-attachments/assets/2a5ad3de-e88a-4669-a3ed-c076966bbd3a" />
-
+### Repository Map: 
+<!-- REPO_MAP_START -->
 ```bash
-├── LICENSE
-├── README.md
-├── ansible
-│   └── playbooks
-│       ├── bootstrap.yml
-│       └── site.yml
-└── infra
-    ├── main.tf
-    ├── outputs.tf
-    └── providers.tf
+
 ```
+<!--REPO_MAP_END --> 
+## Architecture Diagram: 
+<img width="3840" height="1440" alt="ArchitectureDiagramLR" src="https://github.com/user-attachments/assets/4366554c-10d9-4218-8391-b413e0f1d30b" />
