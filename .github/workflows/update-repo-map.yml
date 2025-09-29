@@ -1,0 +1,75 @@
+name: Update Repository Map
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to update"
+        required: true
+        default: "main"
+      L:
+        description: "tree depth (-L)"
+        required: true
+        default: "3"
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Install tree
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tree
+
+      - name: Generate tree
+        shell: bash
+        run: |
+          L="${{ inputs.L }}"
+          [[ "$L" =~ ^[0-9]+$ ]] || L=3
+          tree -a -L "$L" > .repo_tree.txt
+
+      - name: Build code block (without markers)
+        run: |
+          {
+            echo '```bash'
+            cat .repo_tree.txt
+            echo '```'
+          } > .repo_map_block.md
+
+      - name: Update README between markers
+        shell: bash
+        run: |
+          START_RE='<!-- *REPO_MAP_START *-->'
+          END_RE='<!-- *REPO_MAP_END *-->'
+          if grep -Eq "$START_RE" README.md && grep -Eq "$END_RE" README.md; then
+            awk -v startre="$START_RE" -v endre="$END_RE" '
+              BEGIN { inblk=0 }
+              {
+                if ($0 ~ startre) { print; system("cat .repo_map_block.md"); inblk=1; next }
+                if ($0 ~ endre && inblk==1) { print; inblk=0; next }
+                if (inblk==0) print
+              }
+            ' README.md > README.md.tmp && mv README.md.tmp README.md
+          else
+            echo "Markers not found; no change." >&2
+          fi
+
+      - name: Commit and push (if changed)
+        run: |
+          if git diff --quiet; then
+            echo "No changes."
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add README.md .repo_tree.txt .repo_map_block.md
+            git commit -m "docs: update repository map (L=${{ inputs.L }})"
+            git push
+          fi
