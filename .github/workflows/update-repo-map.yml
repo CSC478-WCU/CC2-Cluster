@@ -29,12 +29,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y tree
 
-      - name: Generate tree
+      - name: Generate tree (ignore .git)
         shell: bash
         run: |
           L="${{ inputs.L }}"
           [[ "$L" =~ ^[0-9]+$ ]] || L=3
-          tree -a -L "$L" > .repo_tree.txt
+          # -a shows dotfiles; -I ".git" excludes any .git directory anywhere
+          tree -a -I ".git" -L "$L" > .repo_tree.txt
 
       - name: Build code block (without markers)
         run: |
