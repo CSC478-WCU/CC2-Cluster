@@ -11,6 +11,11 @@ on:
         description: "SSH user on nodes (CL username)"
         required: true
         default: "tg996676"
+      num_workers: 
+        description: "Number of worker nodes instantiated" 
+        required: true
+        type: int
+        default: "2"
       aggregate:
         description: "Select CloudLab aggregate"
         required: true
@@ -100,6 +105,7 @@ on:
           - "sm110p"
           - "sm220u"
         default: "d710"
+      
 
 jobs:
   terraform:
