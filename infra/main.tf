@@ -1,35 +1,34 @@
-resource "cloudlab_portal_experiment" "CC2-Cluster" {
+resource "cloudlab_portal_experiment" "cc2_cluster" {
   name            = "CampusConnect"
   wait_for_status = "ready"
 
-  rawpc {
-    name          = "kubeadm"
-    hardware_type = var.hardware_type
-    aggregate     = local.aggregate_map[var.aggregate]
-    exclusive     = true
-    routable_ip   = true
+  # kubeadm + worker1..workerN
+  dynamic "rawpc" {
+    for_each = toset(concat(
+      ["kubeadm"],
+      [for i in range(var.num_workers) : "worker${i + 1}"]
+    ))
+    content {
+      name          = rawpc.key
+      hardware_type = var.hardware_type
+      aggregate     = var.aggregate_map[var.aggregate]
+      exclusive     = true
+      routable_ip   = true
+    }
   }
 
-  rawpc {
-    name          = "worker1"
-    hardware_type = var.hardware_type
-    aggregate     = local.aggregate_map[var.aggregate]
-    exclusive     = true
-    routable_ip   = true
-  }
-
-  rawpc {
-    name          = "worker2"
-    hardware_type = var.hardware_type
-    aggregate     = local.aggregate_map[var.aggregate]
-    exclusive     = true
-    routable_ip   = true
-  }
-
+  # LAN with all nodes
   lan {
     name = "lan0"
-    interface { node = "kubeadm" }
-    interface { node = "worker1" }
-    interface { node = "worker2" }
+
+    dynamic "interface" {
+      for_each = toset(concat(
+        ["kubeadm"],
+        [for i in range(var.num_workers) : "worker${i + 1}"]
+      ))
+      content {
+        node = interface.key
+      }
+    }
   }
 }

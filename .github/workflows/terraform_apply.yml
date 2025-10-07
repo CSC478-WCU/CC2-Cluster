@@ -11,11 +11,11 @@ on:
         description: "SSH user on nodes (CL username)"
         required: true
         default: "tg996676"
-      num_workers: 
-        description: "Number of worker nodes instantiated" 
+      num_workers:
+        description: "Number of worker nodes instantiated"
         required: true
-        type: int
-        default: "2"
+        type: number
+        default: 2
       aggregate:
         description: "Select CloudLab aggregate"
         required: true
@@ -105,7 +105,6 @@ on:
           - "sm110p"
           - "sm220u"
         default: "d710"
-      
 
 jobs:
   terraform:
@@ -143,7 +142,8 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="aggregate=${{ inputs.aggregate }}" \
-            -var="hardware_type=${{ inputs.hardware_type }}"
+            -var="hardware_type=${{ inputs.hardware_type }}" \
+            -var="num_workers=${{ inputs.num_workers }}"
 
       - name: Show outputs (human)
         working-directory: ./infra

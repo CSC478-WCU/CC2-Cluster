@@ -1,3 +1,7 @@
+output "url" {
+  value = cloudlab_portal_experiment.cc2_cluster.url
+}
 
-output "url"   { value = cloudlab_portal_experiment.CC2-Cluster.url }
-output "nodes" { value = cloudlab_portal_experiment.CC2-Cluster.nodes }
+output "nodes" {
+  value = cloudlab_portal_experiment.cc2_cluster.nodes
+}
