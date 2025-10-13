@@ -4,4 +4,5 @@ storageClasses:
   block: rook-ceph-block
   fs: rook-cephfs
 
-mountPath: /tmp/ceph-osd
+dataDirHostPath: /var/lib/rook
+osdDevice: /dev/sdb1

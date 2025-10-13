@@ -81,12 +81,59 @@
     force: yes
     update: yes
 
-- name: Ensure mount path directory exists
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ ansible_ssh_user }}"
-    mode: '0755'
-  loop:
-    - /tmp/ceph-osd
-    - /tmp/rook
+- block:
+    - name: Install disk tools for OSD prep
+      ansible.builtin.apt:
+        name:
+          - parted
+          - gdisk
+          - util-linux
+        state: present
+        update_cache: yes
+
+    - name: Resolve OSD device and partition vars
+      ansible.builtin.set_fact:
+        _osd_device: "{{ osd_device | default('/dev/sdb') }}"
+        _osd_partnum: "{{ osd_partition_number | default(1) }}"
+        _osd_partition: "{{ (osd_device | default('/dev/sdb')) ~ (osd_partition_number | default(1)) }}"
+
+    - name: Guardrail | refuse to touch likely boot disk
+      ansible.builtin.fail:
+        msg: "Refusing to partition {{ _osd_device }} (looks like the boot/system disk). Set osd_device to a non-boot disk."
+      when: _osd_device == '/dev/sda'
+
+    - name: Check that target OSD device exists and is a block device
+      ansible.builtin.stat:
+        path: "{{ _osd_device }}"
+      register: osd_dev_stat
+
+    - name: Fail if target OSD device is missing
+      ansible.builtin.fail:
+        msg: "OSD device {{ _osd_device }} not found on this host."
+      when: not osd_dev_stat.stat.exists or not osd_dev_stat.stat.isblk
+
+    - name: Create GPT and a single primary partition (1MiB -> 100%)
+      community.general.parted:
+        device: "{{ _osd_device }}"
+        number: "{{ _osd_partnum }}"
+        label: gpt
+        state: present
+        part_start: 1MiB
+        part_end: 100%
+      register: parted_result
+
+    - name: Udev settle after partitioning
+      ansible.builtin.command: udevadm settle
+      changed_when: false
+
+    - name: Wipe any signatures on the new OSD partition
+      ansible.builtin.command: "wipefs -a {{ _osd_partition }}"
+      args:
+        warn: false
+      changed_when: "'/dev/' in _osd_partition"
+      failed_when: false
+
+    - name: Show final OSD partition for this node
+      ansible.builtin.debug:
+        msg: "OSD partition ready: {{ _osd_partition }}"
+  when: true
