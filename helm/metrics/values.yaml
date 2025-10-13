@@ -1,6 +1,6 @@
 prometheus:
   service:
-    type: Loadbalancer
+    type: LoadBalancer
     port: 80
   prometheusSpec:
     retention: 7d
