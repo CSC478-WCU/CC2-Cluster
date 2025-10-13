@@ -80,3 +80,13 @@
     version: "{{ branch | default('main') }}"
     force: yes
     update: yes
+
+- name: Ensure mount path directory exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_ssh_user }}"
+    mode: '0755'
+  loop:
+    - /tmp/ceph-osd
+    - /tmp/rook
