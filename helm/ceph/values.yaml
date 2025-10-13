@@ -1,16 +1,7 @@
 namespace: rook-ceph
 
-nodes:
-- name: worker1
-  devices:
-  - /dev/sdb
-- name: worker2
-  devices:
-  - /dev/sdb
-- name: worker3
-  devices:
-  - /dev/sdb
-
 storageClasses:
   block: rook-ceph-block
   fs: rook-cephfs
+
+mountPath: /tmp/ceph-osd

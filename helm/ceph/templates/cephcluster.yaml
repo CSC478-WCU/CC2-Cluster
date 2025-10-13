@@ -4,7 +4,7 @@ metadata:
   name: rook-ceph
   namespace: {{ .Values.namespace }}
 spec:
-  dataDirHostPath: /var/lib/rook
+  dataDirHostPath: /tmp/rook
   cephVersion:
     image: quay.io/ceph/ceph:v18
   mon:
@@ -15,13 +15,9 @@ spec:
   dashboard:
     enabled: true
   storage:
-    useAllNodes: false
+    useAllNodes: true
     useAllDevices: false
-    nodes:
-{{- range .Values.nodes }}
-      - name: {{ .name }}
-        devices:
-{{- range .devices }}
-          - name: {{ . }}
-{{- end }}
-{{- end }}
+    config:
+      storeType: bluestore
+    directories:
+    - path: {{ .Values.mountPath }}
