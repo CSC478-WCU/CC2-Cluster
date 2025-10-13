@@ -1,6 +1,11 @@
 # roles/external-dns/tasks/main.yml
 # ---------------------------------
-# Install ExternalDNS with Cloudflare provider (using GHCR image).
+# Install ExternalDNS (official Kubernetes SIGs chart) with Cloudflare provider.
+
+- name: Add ExternalDNS official Helm repo
+  kubernetes.core.helm_repository:
+    name: external-dns
+    repo_url: https://kubernetes-sigs.github.io/external-dns/
 
 - name: Ensure external-dns namespace exists
   kubernetes.core.k8s:
@@ -20,21 +25,16 @@
       apiVersion: v1
       kind: Secret
       metadata:
-        name: external-dns-env
+        name: cloudflare-api-token
         namespace: external-dns
       type: Opaque
       stringData:
         CF_API_TOKEN: "{{ cloudflare_api_token }}"
 
-- name: Add Bitnami Helm repo
-  kubernetes.core.helm_repository:
-    name: bitnami
-    repo_url: https://charts.bitnami.com/bitnami
-
-- name: Deploy ExternalDNS (GHCR image)
+- name: Deploy ExternalDNS (official chart)
   kubernetes.core.helm:
     name: external-dns
-    chart_ref: bitnami/external-dns
+    chart_ref: external-dns/external-dns
     release_namespace: external-dns
     create_namespace: false
     kubeconfig: /etc/kubernetes/admin.conf
@@ -42,14 +42,13 @@
     atomic: true
     timeout: "900s"
     values:
-      rbac:
-        create: true
-      image:
-        repository: ghcr.io/kubernetes-sigs/external-dns/external-dns
-        tag: v0.19.0
-        pullPolicy: IfNotPresent
       provider: cloudflare
-      extraEnvVarsSecret: external-dns-env  
+      env:
+        - name: CF_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cloudflare-api-token
+              key: CF_API_TOKEN
       sources:
         - ingress
         - service
