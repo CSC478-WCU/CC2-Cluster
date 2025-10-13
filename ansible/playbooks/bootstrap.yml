@@ -58,5 +58,5 @@
     - ingress-nginx
     - external-dns
     - ingress-app
-  
-
+    - ceph
+    - metrics

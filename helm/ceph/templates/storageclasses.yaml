@@ -1,0 +1,31 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: { ? { .Values.storageClasses.block } }
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: { ? { .Values.namespace } }
+  pool: replicapool
+  imageFormat: "2"
+  imageFeatures: layering
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: { ? { .Values.namespace } }
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: { ? { .Values.namespace } }
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: { ? { .Values.storageClasses.fs } }
+provisioner: rook-ceph.cephfs.csi.ceph.com
+parameters:
+  clusterID: { ? { .Values.namespace } }
+  fsName: cephfs
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: { ? { .Values.namespace } }
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+  csi.storage.k8s.io/node-stage-secret-namespace: { ? { .Values.namespace } }
+allowVolumeExpansion: true
+reclaimPolicy: Retain

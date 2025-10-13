@@ -1,0 +1,23 @@
+---
+# roles/ceph/tasks/main.yml
+# -------------------------
+# Deploy Rook-Ceph cluster chart.
+
+- name: Deploy rook-ceph operator
+  kubernetes.core.helm:
+    name: rook-ceph
+    chart_ref: rook-release/rook-ceph
+    release_namespace: rook-ceph
+    kubeconfig: /etc/kubernetes/admin.conf
+    create_namespace: true
+    wait: true
+    timeout: "600s"
+
+- name: Deploy custom Ceph cluster (StorageClasses, Pools, FS)
+  kubernetes.core.helm:
+    name: rook-ceph-cluster
+    chart_ref: "/users/{{ ansible_user }}/local/repository/helm/ceph"
+    release_namespace: rook-ceph
+    kubeconfig: /etc/kubernetes/admin.conf
+    wait: true
+    timeout: "600s"

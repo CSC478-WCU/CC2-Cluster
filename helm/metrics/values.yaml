@@ -1,0 +1,60 @@
+prometheus:
+  service:
+    type: Loadbalancer
+    port: 80
+  prometheusSpec:
+    retention: 7d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: rook-ceph-block
+          resources:
+            requests:
+              storage: 50Gi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+    - prometheus.campusconnectwcu.com
+
+grafana:
+  enabled: true
+  service:
+    type: LoadBalancer
+    port: 80
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    type: pvc
+    accessModes:
+    - ReadWriteMany
+    storageClassName: rook-cephfs
+    size: 10Gi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+    - metrics.campusconnectwcu.com
+
+    - secretName: grafana-tls
+      hosts:
+      - metrics.campusconnectwcu.com
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 3
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: rook-ceph-block
+          resources:
+            requests:
+              storage: 5Gi
