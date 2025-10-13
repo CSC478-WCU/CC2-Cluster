@@ -1,7 +1,11 @@
----
 # roles/ceph/tasks/main.yml
 # -------------------------
 # Deploy Rook-Ceph cluster chart.
+
+- name: Add Rook-Ceph Helm repo
+  kubernetes.core.helm_repository:
+    name: rook-release
+    repo_url: https://charts.rook.io/release
 
 - name: Deploy rook-ceph operator
   kubernetes.core.helm:
