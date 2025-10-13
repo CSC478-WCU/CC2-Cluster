@@ -41,10 +41,6 @@ grafana:
     hosts:
     - metrics.campusconnectwcu.com
 
-    - secretName: grafana-tls
-      hosts:
-      - metrics.campusconnectwcu.com
-
 alertmanager:
   enabled: true
   alertmanagerSpec:
