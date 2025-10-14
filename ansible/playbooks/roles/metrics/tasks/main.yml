@@ -7,6 +7,33 @@
     name: prometheus-community
     repo_url: https://prometheus-community.github.io/helm-charts
 
+# --- Create Grafana admin secret if not present ---
+- name: Ensure monitoring namespace exists
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+
+- name: Create Grafana admin credentials secret
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: grafana-admin-credentials
+        namespace: monitoring
+      type: Opaque
+      stringData:
+        admin-user: admin
+        admin-password: "{{ grafana_admin_password | default('admin123') }}"
+
+# --- Deploy Prometheus + Grafana stack ---
 - name: Deploy kube-prometheus-stack
   kubernetes.core.helm:
     name: kube-prometheus-stack

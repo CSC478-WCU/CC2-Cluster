@@ -58,3 +58,5 @@
       txtOwnerId: campusconnect
       interval: 1m
       logLevel: info
+      extraArgs:
+        - --cloudflare-proxied
