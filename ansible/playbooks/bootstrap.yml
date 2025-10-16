@@ -60,3 +60,5 @@
     - ingress-app
     - ceph
     - metrics
+    - databases
+    - services

@@ -1,0 +1,56 @@
+---
+# roles/services/tasks/main.yml
+# Deploy app services via local Helm charts:
+# - backend
+# - frontend
+# - rabbitmq
+#
+# Required vars:
+#   apps_namespace: rook-ceph
+#   charts_root: "{{ playbook_dir }}/../charts"
+#   values_overrides:
+#     backend: {...}
+#     frontend: {...}
+#     rabbitmq: {...}
+
+- name: Ensure services namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ apps_namespace }}"
+
+- name: Deploy rabbitmq
+  kubernetes.core.helm:
+    name: rabbitmq
+    chart_ref: "{{ charts_root }}/services/rabbitmq"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.rabbitmq | default({}) }}"
+
+- name: Deploy backend
+  kubernetes.core.helm:
+    name: backend
+    chart_ref: "{{ charts_root }}/services/backend"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.backend | default({}) }}"
+
+- name: Deploy frontend
+  kubernetes.core.helm:
+    name: frontend
+    chart_ref: "{{ charts_root }}/services/frontend"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.frontend | default({}) }}"

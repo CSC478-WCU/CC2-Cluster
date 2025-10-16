@@ -1,0 +1,55 @@
+---
+# roles/databases/tasks/main.yml
+# Deploy database layer via local Helm charts:
+# - mongo
+# - minio
+# - redis
+# Required vars:
+#   apps_namespace: rook-ceph
+#   charts_root: "{{ playbook_dir }}/../charts"
+#   values_overrides:
+#     mongo: {...}
+#     minio: {...}
+#     redis: {...}
+
+- name: Ensure databases namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ apps_namespace }}"
+
+- name: Deploy mongo
+  kubernetes.core.helm:
+    name: mongo
+    chart_ref: "{{ charts_root }}/databases/mongo"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.mongo | default({}) }}"
+
+- name: Deploy minio
+  kubernetes.core.helm:
+    name: minio
+    chart_ref: "{{ charts_root }}/databases/minio"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.minio | default({}) }}"
+
+- name: Deploy redis
+  kubernetes.core.helm:
+    name: redis
+    chart_ref: "{{ charts_root }}/databases/redis"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.redis | default({}) }}"
