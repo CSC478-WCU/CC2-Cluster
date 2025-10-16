@@ -6,7 +6,7 @@ ingress:
     paths:
     - path: /
       pathType: Prefix
-      serviceName: placeholder
+      serviceName: frontend
       servicePort: 80
   - host: api.campusconnectwcu.com
     paths:
