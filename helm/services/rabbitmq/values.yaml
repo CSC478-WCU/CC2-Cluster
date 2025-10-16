@@ -1,0 +1,20 @@
+namespace: rook-ceph
+
+image: rabbitmq:3-management
+replicas: 1
+
+service:
+  amqpPort: 5672
+  httpPort: 15672
+  type: ClusterIP
+
+persistence:
+  storageClass: rook-ceph-block
+  size: 5Gi
+  accessModes: ["ReadWriteOnce"]
+
+auth:
+  username: guest
+  password: guest
+
+resources: {}

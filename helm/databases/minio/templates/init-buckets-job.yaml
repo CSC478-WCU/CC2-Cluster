@@ -1,0 +1,69 @@
+{{- if .Values.buckets }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: quay.io/minio/mc
+          envFrom:
+            - secretRef: { name: minio-creds }
+          command: ["/bin/sh","-c"]
+          args:
+            - >
+              set -e;
+
+              API="http://minio:{{ .Values.service.apiPort }}";
+
+              echo "Waiting for MinIO API at ${API}...";
+              until mc alias set local "${API}" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+                sleep 3;
+              done
+              echo "MinIO alias set.";
+
+              {{- if and .Values.notifications .Values.notifications.amqp .Values.notifications.amqp.enabled }}
+              echo "Configuring AMQP notify target '{{ .Values.notifications.amqp.name }}'...";
+              mc admin config set local \
+                notify_amqp:{{ .Values.notifications.amqp.name }} \
+                url='{{ .Values.notifications.amqp.url }}' \
+                queue_dir='{{ .Values.notifications.amqp.queueDir }}' \
+                exchange='{{ .Values.notifications.amqp.exchange }}' \
+                exchange_type='{{ .Values.notifications.amqp.exchangeType }}' \
+                routing_key='{{ .Values.notifications.amqp.routingKey }}';
+
+              echo "Restarting MinIO to apply notify config...";
+              mc admin service restart local;
+
+              # wait a moment for restart
+              sleep 5;
+              until mc alias set local "${API}" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+                sleep 3;
+              done
+              echo "MinIO back online.";
+              {{- end }}
+
+              echo "Creating buckets and setting policies...";
+              {{- range .Values.buckets }}
+              mc mb --ignore-existing local/{{ .name }};
+              {{- if eq .policy "public" }}
+              mc anonymous set public local/{{ .name }} || true;
+              {{- else if eq .policy "readonly" }}
+              mc anonymous set download local/{{ .name }} || true;
+              {{- end }}
+              {{- end }}
+
+              {{- if and .Values.notifications .Values.notifications.amqp .Values.notifications.amqp.enabled }}
+              echo "Adding AMQP events on buckets (PUT)...";
+              {{- range .Values.buckets }}
+              mc event add local/{{ .name }} arn:minio:sqs::{{ $.Values.notifications.amqp.name }}:amqp --event put || true;
+              {{- end }}
+              {{- end }}
+
+              echo "Buckets initialized.";
+{{- end }}

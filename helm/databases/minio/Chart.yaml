@@ -1,0 +1,5 @@
+apiVersion: v2
+name: minio
+version: 0.1.0
+type: application
+description: Minimal single-node MinIO on Rook-Ceph RBD with optional bucket init Job

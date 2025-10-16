@@ -1,0 +1,5 @@
+apiVersion: v2
+name: backend
+version: 0.1.0
+type: application
+description: CampusConnect backend (NestJS/Express) wired to Mongo, Redis, MinIO, RabbitMQ

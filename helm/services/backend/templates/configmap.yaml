@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}
+  API_PREFIX: {{ .Values.env.API_PREFIX | quote }}
+  APP_NAME: {{ .Values.env.APP_NAME | quote }}
+  APP_VERSION: {{ .Values.env.APP_VERSION | quote }}
+
+  MONGO_URI: {{ .Values.connections.mongo.uri | quote }}
+  REDIS_HOST: {{ .Values.connections.redis.host | quote }}
+  REDIS_PORT: {{ .Values.connections.redis.port | quote }}
+
+  MINIO_HOST: {{ .Values.connections.minio.host | quote }}
+  MINIO_PORT: {{ .Values.connections.minio.port | quote }}
+  MINIO_PUBLIC_BUCKET: {{ .Values.connections.minio.publicBucket | quote }}
+  MINIO_PRIVATE_BUCKET: {{ .Values.connections.minio.privateBucket | quote }}
+  MINIO_USE_SSL: {{ ternary "true" "false" .Values.connections.minio.useSSL | quote }}
+
+  RABBITMQ_URL: {{ .Values.connections.rabbitmq.url | quote }}

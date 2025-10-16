@@ -1,0 +1,35 @@
+namespace: rook-ceph
+
+image: quay.io/minio/minio:RELEASE.2025-01-09T00-00-00Z
+replicas: 1
+
+service:
+  apiPort: 9000
+  consolePort: 9001
+  type: ClusterIP
+
+persistence:
+  storageClass: rook-ceph-block
+  size: 50Gi
+
+credentials:
+  accessKey: "minio"
+  secretKey: "minio123"
+
+buckets:
+  - name: profile-pictures
+    policy: public
+  - name: uploads-private
+    policy: none
+
+notifications:
+  amqp:
+    enabled: true
+    name: "amqp1" 
+    url: "amqp://guest:guest@rabbitmq.rook-ceph.svc.cluster.local:5672"
+    queueDir: "/opt/minio/queue"
+    exchange: ""
+    exchangeType: "fanout"
+    routingKey: "" 
+
+resources: {}

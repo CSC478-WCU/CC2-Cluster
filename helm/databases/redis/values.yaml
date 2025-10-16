@@ -1,0 +1,16 @@
+namespace: rook-ceph
+
+image: redis:7
+replicas: 1
+
+service:
+  port: 6379
+
+persistence:
+  storageClass: rook-ceph-block
+  size: 10Gi
+
+config:
+  appendonly: "yes"
+
+resources: {}

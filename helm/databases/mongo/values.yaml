@@ -1,0 +1,19 @@
+namespace: rook-ceph
+
+image: mongo:6
+replicas: 1
+
+service:
+  port: 27017
+
+persistence:
+  storageClass: rook-ceph-block
+  size: 20Gi
+
+auth:
+  enabled: false
+  username: ""
+  password: ""
+  database: "campusconnect"
+
+resources: {}
