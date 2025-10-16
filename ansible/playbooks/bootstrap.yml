@@ -62,3 +62,6 @@
     - metrics
     - databases
     - services
+  vars: 
+    apps_namespace: rook-ceph
+    
