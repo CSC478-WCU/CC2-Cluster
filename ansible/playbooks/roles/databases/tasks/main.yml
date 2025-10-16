@@ -2,15 +2,18 @@
 # roles/databases/tasks/main.yml
 # Deploy database layer via local Helm charts:
 # - mongo
-# - minio
+# - minio  (two-phase rollout to avoid Helm timeouts)
 # - redis
+#
 # Required vars:
 #   apps_namespace: rook-ceph
-#   charts_root: "{{ playbook_dir }}/../charts"
+#   charts_root: "/users/{{ ansible_user }}/local/repository/helm"
 #   values_overrides:
 #     mongo: {...}
 #     minio: {...}
 #     redis: {...}
+#
+#   minio_vct_name: "data"
 
 - name: Ensure databases namespace exists
   kubernetes.core.k8s:
@@ -21,6 +24,9 @@
       metadata:
         name: "{{ apps_namespace }}"
 
+# -------------------------
+# MongoDB (atomic install)
+# -------------------------
 - name: Deploy mongo
   kubernetes.core.helm:
     name: mongo
@@ -32,7 +38,66 @@
     timeout: "900s"
     values: "{{ values_overrides.mongo | default({}) }}"
 
-- name: Deploy minio
+# -------------------------
+# MinIO (two-phase rollout)
+# -------------------------
+# 1) Install without waiting (avoids atomic rollback when PVC/pod/init are slow)
+- name: Deploy minio (no Helm wait; targeted waits follow)
+  kubernetes.core.helm:
+    name: minio
+    chart_ref: "{{ charts_root }}/databases/minio"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: false
+    wait: false
+    timeout: "900s"
+    values: "{{ values_overrides.minio | default({}) }}"
+
+# 2) Wait for StatefulSet to appear
+- name: Wait for MinIO StatefulSet to exist
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: StatefulSet
+    name: minio
+    namespace: "{{ apps_namespace }}"
+  register: minio_sts
+  until: minio_sts.resources | length > 0
+  retries: 30
+  delay: 3
+
+# 3) Wait for MinIO PVC to bind (reuses existing if already Bound)
+- name: Wait for MinIO PVC to be Bound
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: "{{ (minio_vct_name | default('data')) }}-minio-0"
+    namespace: "{{ apps_namespace }}"
+  register: minio_pvc
+  until: minio_pvc.resources and minio_pvc.resources[0].status.phase == 'Bound'
+  retries: 60
+  delay: 5
+
+# 4) Wait for the MinIO pod to become Ready
+- name: Wait for MinIO pod to be Ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ apps_namespace }}"
+    label_selectors: [ "app=minio" ]
+  register: minio_pods
+  until: >
+    minio_pods.resources |
+    selectattr('status.containerStatuses','defined') |
+    selectattr('status.containerStatuses','search','"ready": true') |
+    list | length > 0
+  retries: 60
+  delay: 5
+
+# 5) OPTIONAL: run the one-time init job (buckets/policies) if requested
+#    Enable by setting values_overrides.minio.init.enabled: true
+- name: (Optional) Run MinIO init job via Helm upgrade
+  when: (values_overrides.minio | default({})).init is defined and
+        ((values_overrides.minio.init.enabled | default(false)) | bool)
   kubernetes.core.helm:
     name: minio
     chart_ref: "{{ charts_root }}/databases/minio"
@@ -41,8 +106,11 @@
     atomic: true
     wait: true
     timeout: "900s"
-    values: "{{ values_overrides.minio | default({}) }}"
+    values: "{{ values_overrides.minio }}"
 
+# -------------------------
+# Redis (atomic install)
+# -------------------------
 - name: Deploy redis
   kubernetes.core.helm:
     name: redis

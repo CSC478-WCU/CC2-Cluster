@@ -1,6 +1,6 @@
 namespace: rook-ceph
 
-image: mongo:6
+image: mongo:4.4.24  
 replicas: 1
 
 service:
