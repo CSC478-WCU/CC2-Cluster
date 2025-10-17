@@ -122,7 +122,7 @@
 - name: Deploy redis
   kubernetes.core.helm:
     name: redis
-    chart_ref: "{{ charts_root }}/databases/redis}"
+    chart_ref: "{{ charts_root }}/databases/redis"
     release_namespace: "{{ db_namespace }}"
     create_namespace: false
     atomic: true
