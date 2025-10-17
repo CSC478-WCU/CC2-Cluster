@@ -93,8 +93,30 @@
   retries: 90
   delay: 5
 
-# --- Rollout waits: operator, grafana, ksm, node-exporter, prometheus, alertmanager ---
+# --- NEW: Wait for Grafana PVC to be Bound (prevents rollout progress deadline flake) ---
+- name: Wait for Grafana PVC to be Bound
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: monitoring
+    name: kube-prometheus-stack-grafana
+    kubeconfig: /etc/kubernetes/admin.conf
+  register: grafana_pvc
+  until: grafana_pvc.resources and grafana_pvc.resources[0].status.phase == 'Bound'
+  retries: 90
+  delay: 5
 
+# --- NEW: Be more forgiving on Grafana rollout progress deadline ---
+- name: Increase Grafana progressDeadlineSeconds to 1200s (best-effort)
+  ansible.builtin.command: >
+    kubectl --kubeconfig=/etc/kubernetes/admin.conf
+    -n monitoring
+    patch deploy kube-prometheus-stack-grafana
+    -p '{"spec":{"progressDeadlineSeconds":1200}}'
+  changed_when: false
+  failed_when: false
+
+# --- Rollout waits: operator, grafana, ksm, node-exporter, prometheus, alertmanager ---
 - name: Wait for operator rollout
   ansible.builtin.command: >
     kubectl --kubeconfig=/etc/kubernetes/admin.conf

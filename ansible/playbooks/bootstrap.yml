@@ -51,7 +51,7 @@
 # ----------------------------
 - hosts: kubeadmin
   become: yes
-  vars_files: 
+  vars_files:
     - ../vault/cloudflare.yml
   roles:
     - metallb
@@ -63,16 +63,23 @@
     - databases
     - services
   vars:
+    db_namespace: rook-ceph
     apps_namespace: services
     charts_root: "/users/{{ ansible_user }}/local/repository/helm"
+
     values_overrides:
       backend:
-        namespace: "{{ apps_namespace }}"    
+        namespace: "{{ apps_namespace }}"
       frontend:
         namespace: "{{ apps_namespace }}"
       rabbitmq:
         namespace: "{{ apps_namespace }}"
+
+      mongo:
+        namespace: "{{ db_namespace }}"
+      redis:
+        namespace: "{{ db_namespace }}"
       minio:
+        namespace: "{{ db_namespace }}"
         init:
           enabled: true
-      

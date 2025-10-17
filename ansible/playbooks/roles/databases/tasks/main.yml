@@ -6,13 +6,9 @@
 # - redis
 #
 # Required vars:
-#   apps_namespace: rook-ceph
+#   db_namespace: rook-ceph
 #   charts_root: "/users/{{ ansible_user }}/local/repository/helm"
-#   values_overrides:
-#     mongo: {...}
-#     minio: {...}
-#     redis: {...}
-#
+#   values_overrides: { mongo/minio/redis ... }
 #   minio_vct_name: "data"
 
 - name: Ensure databases namespace exists
@@ -22,7 +18,7 @@
       apiVersion: v1
       kind: Namespace
       metadata:
-        name: "{{ apps_namespace }}"
+        name: "{{ db_namespace }}"
 
 # -------------------------
 # MongoDB (atomic install)
@@ -31,7 +27,7 @@
   kubernetes.core.helm:
     name: mongo
     chart_ref: "{{ charts_root }}/databases/mongo"
-    release_namespace: "{{ apps_namespace }}"
+    release_namespace: "{{ db_namespace }}"
     create_namespace: false
     atomic: true
     wait: true
@@ -46,7 +42,7 @@
   kubernetes.core.helm:
     name: minio
     chart_ref: "{{ charts_root }}/databases/minio"
-    release_namespace: "{{ apps_namespace }}"
+    release_namespace: "{{ db_namespace }}"
     create_namespace: false
     atomic: false
     wait: false
@@ -59,7 +55,7 @@
     api_version: apps/v1
     kind: StatefulSet
     name: minio
-    namespace: "{{ apps_namespace }}"
+    namespace: "{{ db_namespace }}"
   register: minio_sts
   until: minio_sts.resources | length > 0
   retries: 30
@@ -71,7 +67,7 @@
     api_version: v1
     kind: PersistentVolumeClaim
     name: "{{ (minio_vct_name | default('data')) }}-minio-0"
-    namespace: "{{ apps_namespace }}"
+    namespace: "{{ db_namespace }}"
   register: minio_pvc
   until: minio_pvc.resources and minio_pvc.resources[0].status.phase == 'Bound'
   retries: 60
@@ -82,7 +78,7 @@
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Pod
-    namespace: "{{ apps_namespace }}"
+    namespace: "{{ db_namespace }}"
     label_selectors:
       - app=minio
     kubeconfig: /etc/kubernetes/admin.conf
@@ -107,14 +103,13 @@
   delay: 5
 
 # 5) OPTIONAL: run the one-time init job (buckets/policies) if requested
-#    Enable by setting values_overrides.minio.init.enabled: true
 - name: (Optional) Run MinIO init job via Helm upgrade
   when: (values_overrides.minio | default({})).init is defined and
         ((values_overrides.minio.init.enabled | default(false)) | bool)
   kubernetes.core.helm:
     name: minio
     chart_ref: "{{ charts_root }}/databases/minio"
-    release_namespace: "{{ apps_namespace }}"
+    release_namespace: "{{ db_namespace }}"
     create_namespace: false
     atomic: true
     wait: true
@@ -127,8 +122,8 @@
 - name: Deploy redis
   kubernetes.core.helm:
     name: redis
-    chart_ref: "{{ charts_root }}/databases/redis"
-    release_namespace: "{{ apps_namespace }}"
+    chart_ref: "{{ charts_root }}/databases/redis}"
+    release_namespace: "{{ db_namespace }}"
     create_namespace: false
     atomic: true
     wait: true
