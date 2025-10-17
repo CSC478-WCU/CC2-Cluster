@@ -65,4 +65,5 @@
   vars: 
     apps_namespace: rook-ceph
     charts_root: "/users/{{ ansible_user }}/local/repository/helm"
+    values_overrides.minio.init.enabled: true
     
