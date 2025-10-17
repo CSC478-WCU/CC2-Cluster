@@ -12,6 +12,8 @@ spec:
     metadata:
       labels: { app: minio }
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: minio
           image: {{ .Values.image }}
