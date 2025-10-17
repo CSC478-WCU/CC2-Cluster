@@ -62,11 +62,17 @@
     - metrics
     - databases
     - services
-  vars: 
-    apps_namespace: rook-ceph
+  vars:
+    apps_namespace: services
     charts_root: "/users/{{ ansible_user }}/local/repository/helm"
     values_overrides:
+      backend:
+        namespace: "{{ apps_namespace }}"    
+      frontend:
+        namespace: "{{ apps_namespace }}"
+      rabbitmq:
+        namespace: "{{ apps_namespace }}"
       minio:
         init:
           enabled: true
-    
+      
