@@ -83,14 +83,27 @@
     api_version: v1
     kind: Pod
     namespace: "{{ apps_namespace }}"
-    label_selectors: [ "app=minio" ]
+    label_selectors:
+      - app=minio
+    kubeconfig: /etc/kubernetes/admin.conf
   register: minio_pods
   until: >
-    minio_pods.resources |
-    selectattr('status.containerStatuses','defined') |
-    selectattr('status.containerStatuses','search','"ready": true') |
-    list | length > 0
-  retries: 60
+    (minio_pods.resources | length > 0)
+    and
+    (
+      minio_pods.resources
+      | map(attribute='status.containerStatuses')
+      | map('default', [])
+      | map('selectattr','ready','equalto',true)
+      | map('list')
+      | sum(start=[]) | length
+      ==
+      (minio_pods.resources
+      | map(attribute='status.containerStatuses')
+      | map('default', [])
+      | sum(start=[]) | length)
+    )
+  retries: 120
   delay: 5
 
 # 5) OPTIONAL: run the one-time init job (buckets/policies) if requested
