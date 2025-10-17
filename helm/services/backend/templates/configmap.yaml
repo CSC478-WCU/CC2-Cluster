@@ -21,3 +21,4 @@ data:
   MINIO_USE_SSL: {{ ternary "true" "false" .Values.connections.minio.useSSL | quote }}
 
   RABBITMQ_URL: {{ .Values.connections.rabbitmq.url | quote }}
+  PORT : {{ .Values.service.port | quote }}
