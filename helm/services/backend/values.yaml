@@ -38,6 +38,11 @@ connections:
 secrets:
   jwtSecret: "jwt_secret_key"
 
+minioCredentials:
+  create: true
+  secretName: "minio-creds"
+  accessKey: "minio"
+  secretKey: "minio123"
 resources: {}
 
 podSecurityContext: {}

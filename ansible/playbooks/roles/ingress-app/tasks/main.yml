@@ -7,7 +7,7 @@
   kubernetes.core.helm:
     name: campusconnect-ingress
     chart_ref: "/users/{{ ansible_user }}/local/repository/helm/ingress"
-    release_namespace: default
+    release_namespace: services
     kubeconfig: /etc/kubernetes/admin.conf
     wait: true
     timeout: "600s"
