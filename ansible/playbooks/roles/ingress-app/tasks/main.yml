@@ -11,3 +11,4 @@
     kubeconfig: /etc/kubernetes/admin.conf
     wait: true
     timeout: "600s"
+    create_namespace: true
