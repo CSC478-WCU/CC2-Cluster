@@ -32,6 +32,17 @@
     wait: true
     timeout: "900s"
     values: "{{ values_overrides.rabbitmq | default({}) }}"
+    
+- name: Deploy frontend
+  kubernetes.core.helm:
+    name: frontend
+    chart_ref: "{{ charts_root }}/services/frontend"
+    release_namespace: "{{ apps_namespace }}"
+    create_namespace: false
+    atomic: true
+    wait: true
+    timeout: "900s"
+    values: "{{ values_overrides.frontend | default({}) }}"
 
 - name: Deploy backend
   kubernetes.core.helm:
@@ -44,13 +55,4 @@
     timeout: "900s"
     values: "{{ values_overrides.backend | default({}) }}"
 
-- name: Deploy frontend
-  kubernetes.core.helm:
-    name: frontend
-    chart_ref: "{{ charts_root }}/services/frontend"
-    release_namespace: "{{ apps_namespace }}"
-    create_namespace: false
-    atomic: true
-    wait: true
-    timeout: "900s"
-    values: "{{ values_overrides.frontend | default({}) }}"
+
